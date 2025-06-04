@@ -1156,19 +1156,21 @@
       let currentGroupName = null;
 
       function openGroupChat(groupId, groupName) {
-        // --- Evitar solapamiento de chats directos y de grupo ---
-        // Al abrir un chat de grupo, limpia el contexto de chat directo.
-        // Esto previene errores al alternar entre chats directos y grupales.
+        // Limpiar contexto directo
         chatWith = null;
         localStorage.removeItem("chat_with");
+
+        // Configurar grupo
         currentGroupId = groupId;
         currentGroupName = groupName;
-        // Guardar grupo actual en localStorage
         localStorage.setItem("current_group_id", groupId);
         localStorage.setItem("current_group_name", groupName);
+
         showSection("chatView");
         document.getElementById("chattingWith").textContent = "Grupo: " + groupName;
-        socket.emit("join_group", { group_id: groupId });  // ← primero únase a la sala
+
+        // Unirse siempre a la sala y limpiar mensajes previos
+        socket.emit("join_group", { group_id: groupId });
         loadGroupChatHistory(groupId);
       }
 
@@ -1290,7 +1292,7 @@
       });
 
       document.addEventListener("DOMContentLoaded", function () {
-        // Reunirse automáticamente al último grupo abierto si existe
+        // Unirse automáticamente al último grupo abierto si existe
         const lastGroupId = localStorage.getItem("current_group_id");
         const lastGroupName = localStorage.getItem("current_group_name");
         if (lastGroupId && lastGroupName) {
