@@ -1314,21 +1314,11 @@
       });
 
       document.addEventListener("DOMContentLoaded", function () {
-        // Por defecto muestra contactos, salvo que haya un chat activo directo o grupal realmente reciente.
-        const lastGroupId = localStorage.getItem("current_group_id");
-        const lastGroupName = localStorage.getItem("current_group_name");
-        const lastDirectChat = localStorage.getItem("chat_with");
-        // Si hay un chat directo pendiente, entra directo a ese.
-        if (lastDirectChat) {
-          startChat(lastDirectChat);
-        } else if (lastGroupId && lastGroupName) {
-          openGroupChat(lastGroupId, lastGroupName).catch(() => {
-            showSection("contactView");
-            showAlert("No se pudo cargar el grupo. Se muestran los contactos.");
-          });
-        } else {
-          showSection("contactView");
-        }
+        // Siempre inicia mostrando contactos y limpia referencias de chats anteriores
+        localStorage.removeItem("current_group_id");
+        localStorage.removeItem("current_group_name");
+        localStorage.removeItem("chat_with");
+        showSection("contactView");
       });
     </script>
   </body>
