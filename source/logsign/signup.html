@@ -34,6 +34,7 @@
         );
         throw new Error("Web Crypto API no disponible");
       }
+      const BACKEND_URL = "https://chat-app-backend-u5na.onrender.com"; // Cambia aquí si tu backend cambia de URL
       const form = document.querySelector("form");
       form.addEventListener("submit", async function (e) {
         e.preventDefault();
@@ -49,7 +50,7 @@
             public_key: publicKeyPEM,
           };
 
-          const response = await fetch("/signup", {
+          const response = await fetch(`${BACKEND_URL}/signup`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data),
