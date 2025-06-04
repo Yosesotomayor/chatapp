@@ -53,7 +53,7 @@
         if (response.ok) {
           localStorage.setItem("user_name", result.name);
           localStorage.setItem("user_email", result.email);
-          window.location.href = "/dashboard.html";
+          window.location.href = "/dashboard/dashboard.html";
         } else {
           errorMsg.textContent = result.error || "Error desconocido";
           errorMsg.style.display = "block";
