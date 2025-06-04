@@ -1151,10 +1151,9 @@
         currentGroupId = groupId;
         currentGroupName = groupName;
         showSection("chatView");
-        document.getElementById("chattingWith").textContent =
-          "Grupo: " + groupName;
+        document.getElementById("chattingWith").textContent = "Grupo: " + groupName;
+        socket.emit("join_group", { group_id: groupId });  // ← primero únase a la sala
         loadGroupChatHistory(groupId);
-        socket.emit("join_group", { group_id: groupId });
       }
 
       async function loadGroupChatHistory(groupId) {
@@ -1202,13 +1201,8 @@
           from: userEmail,
           message: encrypted,
         });
-        // Agregar el mensaje localmente para mostrarlo de inmediato
-        appendGroupMessage({
-          from: userEmail,
-          message: message,
-          group_id: currentGroupId,
-        });
         input.value = "";
+        // No agregues el mensaje aquí, deja que el backend lo propague a todos.
       }
 
       // Modifica el evento de input para soportar grupos
@@ -1224,6 +1218,7 @@
 
       // Recibir mensaje de grupo en tiempo real
       socket.on("receive_group_message", async (msg) => {
+        console.log("[DEBUG][GRUPO] Mensaje recibido:", msg);
         msg.message = await decryptMessageAesGcm(msg.message || msg.text || "");
         if (msg.group_id === currentGroupId) {
           appendGroupMessage(msg);
