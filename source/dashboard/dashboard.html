@@ -1199,14 +1199,18 @@
         try {
           socket.emit("join_group", { group_id: groupId });
           await waitForGroupJoin(groupId);
-          loadGroupChatHistory(groupId);
-          // Agregar listener para recibir mensajes solo una vez por grupo abierto
+          await loadGroupChatHistory(groupId);
+
+          // Listener SIEMPRE después del await y solo uno por vez
           socket.on("receive_group_message", async (msg) => {
-            msg.message = await decryptMessageAesGcm(
-              msg.message || msg.text || ""
-            );
+            // Usar siempre msg.message o msg.text
+            let texto = msg.message || msg.text || "";
+            texto = await decryptMessageAesGcm(texto);
             if (msg.group_id === currentGroupId) {
-              appendGroupMessage(msg);
+              appendGroupMessage({
+                ...msg,
+                message: texto
+              });
             }
           });
         } catch (e) {
@@ -1245,7 +1249,7 @@
 
         el.classList.add("chat-message");
         el.style.alignSelf = isOwn ? "flex-end" : "flex-start";
-        el.innerHTML = `<strong>${displayName}:</strong> ${msg.message}`;
+        el.innerHTML = `<strong>${displayName}:</strong> ${msg.message || msg.text || "[Vacío]"}`;
         container.appendChild(el);
         container.scrollTop = container.scrollHeight;
       }
