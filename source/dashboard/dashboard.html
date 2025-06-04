@@ -1155,7 +1155,20 @@
       let currentGroupId = null;
       let currentGroupName = null;
 
-      function openGroupChat(groupId, groupName) {
+      // Espera a la confirmación de unión a grupo antes de cargar historial
+      function waitForGroupJoin(expectedGroupId) {
+        return new Promise((resolve) => {
+          function handler(data) {
+            if (data && data.group_id === expectedGroupId) {
+              socket.off("joined_group", handler);
+              resolve();
+            }
+          }
+          socket.on("joined_group", handler);
+        });
+      }
+
+      async function openGroupChat(groupId, groupName) {
         // Limpiar contexto directo
         chatWith = null;
         localStorage.removeItem("chat_with");
@@ -1169,9 +1182,22 @@
         showSection("chatView");
         document.getElementById("chattingWith").textContent = "Grupo: " + groupName;
 
-        // Unirse siempre a la sala y limpiar mensajes previos
+        // Eliminar listeners viejos antes de añadir uno nuevo
+        socket.off("receive_group_message");
+
+        // Unirse a la sala y esperar confirmación
         socket.emit("join_group", { group_id: groupId });
+        await waitForGroupJoin(groupId);
+
         loadGroupChatHistory(groupId);
+
+        // Agregar listener para recibir mensajes solo una vez por grupo abierto
+        socket.on("receive_group_message", async (msg) => {
+          msg.message = await decryptMessageAesGcm(msg.message || msg.text || "");
+          if (msg.group_id === currentGroupId) {
+            appendGroupMessage(msg);
+          }
+        });
       }
 
       async function loadGroupChatHistory(groupId) {
@@ -1234,14 +1260,7 @@
           }
         });
 
-      // Recibir mensaje de grupo en tiempo real
-      socket.on("receive_group_message", async (msg) => {
-        console.log("[DEBUG][GRUPO] Mensaje recibido:", msg);
-        msg.message = await decryptMessageAesGcm(msg.message || msg.text || "");
-        if (msg.group_id === currentGroupId) {
-          appendGroupMessage(msg);
-        }
-      });
+      // El listener de grupo ahora se configura dinámicamente en openGroupChat
 
       // Cambia showSection para cargar grupos y actualizar contactos de grupo,
       // y solo cargar contactos una vez al entrar a contactView
