@@ -42,7 +42,7 @@
           password: document.getElementById("password").value,
         };
 
-        const response = await fetch("http://10.48.73.169:5050/login", {
+        const response = await fetch("/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
@@ -52,7 +52,7 @@
         if (response.ok) {
           localStorage.setItem("user_name", result.name);
           localStorage.setItem("user_email", result.email);
-          window.location.href = "../../source/dashboard.html";
+          window.location.href = "/dashboard.html";
         } else {
           errorMsg.textContent = result.error || "Error desconocido";
           errorMsg.style.display = "block";

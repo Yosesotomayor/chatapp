@@ -59,7 +59,7 @@ requestForm.onsubmit = async (e) => {
   spinner1.style.display = "inline";
   const email = document.getElementById("email").value.trim().toLowerCase();
   try {
-    const res = await fetch("http://10.48.73.169:5050/request-reset-code", {
+    const res = await fetch("/request-reset-code", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
@@ -102,7 +102,7 @@ resetForm.onsubmit = async (e) => {
   const code = document.getElementById("code").value.trim();
   const new_password = document.getElementById("newPassword").value;
   try {
-    const res = await fetch("http://10.48.73.169:5050/verify-reset-code", {
+    const res = await fetch("/verify-reset-code", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: emailActual, code, new_password }),

@@ -49,16 +49,13 @@ MESSAGES_CONTAINER = os.getenv("MESSAGES_CONTAINER")
 app = Flask(__name__)
 CORS(
     app,
-    # resources={r"/*": {"origins": "http://10.48.73.169:5050"}},
-    resources={r"/*": {"origins": "http://10.48.73.169:5050"}},
+    resources={r"/*": {"origins": "*"}},
     supports_credentials=True,
 )
-# socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
 socketio = SocketIO(
-    # app, cors_allowed_origins="http://10.48.73.169:5050", async_mode="threading"
     app,
-    cors_allowed_origins="http://10.48.73.169:5050",
+    cors_allowed_origins="*",
     async_mode="threading",
 )
 
@@ -960,6 +957,6 @@ def dynamic_static(filename):
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5050))
-    socketio.run(app, host="10.48.73.169", port=5050, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    socketio.run(app, host="0.0.0.0", port=port)
 
