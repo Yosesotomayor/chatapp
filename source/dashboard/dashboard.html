@@ -746,6 +746,10 @@
         // Limpia también el grupo de localStorage
         localStorage.removeItem("current_group_id");
         localStorage.removeItem("current_group_name");
+        // Limpiar mensajes y input antes de mostrar chatView
+        const messages = document.getElementById("messages");
+        if (messages) messages.innerHTML = "";
+        document.getElementById("inputMessage").value = "";
         chatWith = email;
         localStorage.setItem("chat_with", email);
         showSection("chatView");
@@ -1179,8 +1183,14 @@
         localStorage.setItem("current_group_id", groupId);
         localStorage.setItem("current_group_name", groupName);
 
+        // Limpiar mensajes y input antes de mostrar chatView
+        const messages = document.getElementById("messages");
+        if (messages) messages.innerHTML = "";
+        document.getElementById("inputMessage").value = "";
+
         showSection("chatView");
-        document.getElementById("chattingWith").textContent = "Grupo: " + groupName;
+        document.getElementById("chattingWith").textContent =
+          "Grupo: " + groupName;
 
         // Eliminar listeners viejos antes de añadir uno nuevo
         socket.off("receive_group_message");
@@ -1192,7 +1202,9 @@
           loadGroupChatHistory(groupId);
           // Agregar listener para recibir mensajes solo una vez por grupo abierto
           socket.on("receive_group_message", async (msg) => {
-            msg.message = await decryptMessageAesGcm(msg.message || msg.text || "");
+            msg.message = await decryptMessageAesGcm(
+              msg.message || msg.text || ""
+            );
             if (msg.group_id === currentGroupId) {
               appendGroupMessage(msg);
             }
@@ -1276,7 +1288,13 @@
       };
 
       showSection = function (id) {
-        origShowSection(id); // Siempre cambia (aunque ya sea esa sección)
+        origShowSection(id);
+        if (id === "chatView") {
+          // Limpiar historial y input SIEMPRE que entres a chatView
+          const messages = document.getElementById("messages");
+          if (messages) messages.innerHTML = "";
+          document.getElementById("inputMessage").value = "";
+        }
         if (id === "groupView") {
           loadGroups();
           updateGroupContactsSelect();
