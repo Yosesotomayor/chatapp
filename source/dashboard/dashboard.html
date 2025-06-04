@@ -58,13 +58,19 @@
             <button type="submit">Crear grupo</button>
           </form>
           <!-- Modal para añadir miembros a grupo -->
-          <div id="addMembersModal" class="modal" style="display:none;">
+          <div id="addMembersModal" class="modal" style="display: none">
             <div class="modal-content">
               <h3>Añadir miembros al grupo</h3>
               <form id="addMembersForm">
-                <select id="addMembersSelect" multiple style="width:100%; margin-bottom:1em;"></select>
+                <select
+                  id="addMembersSelect"
+                  multiple
+                  style="width: 100%; margin-bottom: 1em"
+                ></select>
                 <button type="submit">Agregar miembros</button>
-                <button type="button" onclick="closeAddMembersModal()">Cancelar</button>
+                <button type="button" onclick="closeAddMembersModal()">
+                  Cancelar
+                </button>
               </form>
             </div>
           </div>
@@ -213,7 +219,9 @@
       let globalAesKey = null;
 
       async function getGlobalAesKey() {
-        const res = await fetch("https://chat-app-backend-u5na.onrender.com/get-global-aes");
+        const res = await fetch(
+          "https://chat-app-backend-u5na.onrender.com/get-global-aes"
+        );
         const data = await res.json();
         if (!data.key) {
           alert("No se pudo obtener la clave AES global.");
@@ -361,11 +369,14 @@
         };
       }
       async function deleteChat(contactEmail) {
-        const res = await fetch("https://chat-app-backend-u5na.onrender.com/delete-chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user1: userEmail, user2: contactEmail }),
-        });
+        const res = await fetch(
+          "https://chat-app-backend-u5na.onrender.com/delete-chat",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user1: userEmail, user2: contactEmail }),
+          }
+        );
 
         const result = await res.json();
         if (res.ok) {
@@ -376,24 +387,30 @@
       }
       async function checkUnreadMessages() {
         try {
-          const res = await fetch("https://chat-app-backend-u5na.onrender.com/get-contacts", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: userEmail }),
-          });
+          const res = await fetch(
+            "https://chat-app-backend-u5na.onrender.com/get-contacts",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email: userEmail }),
+            }
+          );
 
           const data = await res.json();
           const contacts = data.contacts;
 
           for (const contact of contacts) {
-            const chatRes = await fetch("https://chat-app-backend-u5na.onrender.com/get-messages", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                user1: userEmail,
-                user2: contact.email,
-              }),
-            });
+            const chatRes = await fetch(
+              "https://chat-app-backend-u5na.onrender.com/get-messages",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  user1: userEmail,
+                  user2: contact.email,
+                }),
+              }
+            );
 
             const chatData = await chatRes.json();
             const unreadCount =
@@ -415,11 +432,14 @@
         sent.innerHTML = "<li>Cargando...</li>";
 
         try {
-          const res1 = await fetch("https://chat-app-backend-u5na.onrender.com/get-requests", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: userEmail }),
-          });
+          const res1 = await fetch(
+            "https://chat-app-backend-u5na.onrender.com/get-requests",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email: userEmail }),
+            }
+          );
           const data1 = await res1.json();
 
           if (data1.requests.length === 0) {
@@ -437,11 +457,14 @@
             });
           }
 
-          const res2 = await fetch("https://chat-app-backend-u5na.onrender.com/get-sent-requests", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: userEmail }),
-          });
+          const res2 = await fetch(
+            "https://chat-app-backend-u5na.onrender.com/get-sent-requests",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email: userEmail }),
+            }
+          );
           const data2 = await res2.json();
 
           if (data2.sent.length === 0) {
@@ -465,15 +488,18 @@
       }
 
       async function respondRequest(email, accepted) {
-        const res = await fetch("https://chat-app-backend-u5na.onrender.com/respond-request", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_email: userEmail,
-            requester_email: email,
-            accepted,
-          }),
-        });
+        const res = await fetch(
+          "https://chat-app-backend-u5na.onrender.com/respond-request",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user_email: userEmail,
+              requester_email: email,
+              accepted,
+            }),
+          }
+        );
 
         const data = await res.json();
         showAlert(data.message || "Solicitud procesada.");
@@ -481,11 +507,14 @@
       }
 
       async function cancelRequest(toEmail) {
-        const res = await fetch("https://chat-app-backend-u5na.onrender.com/cancel-request", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ from_email: userEmail, to_email: toEmail }),
-        });
+        const res = await fetch(
+          "https://chat-app-backend-u5na.onrender.com/cancel-request",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ from_email: userEmail, to_email: toEmail }),
+          }
+        );
 
         const result = await res.json();
         showAlert(result.message || "Solicitud cancelada.");
@@ -577,14 +606,17 @@
         }
 
         try {
-          const res = await fetch("https://chat-app-backend-u5na.onrender.com/send-request", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              from_email: userEmail,
-              to_email: toEmail,
-            }),
-          });
+          const res = await fetch(
+            "https://chat-app-backend-u5na.onrender.com/send-request",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                from_email: userEmail,
+                to_email: toEmail,
+              }),
+            }
+          );
 
           const data = await res.json();
           document.getElementById("requestMsg").textContent =
@@ -600,11 +632,14 @@
         const list = document.getElementById("contactList");
         list.innerHTML = "";
         try {
-          const res = await fetch("https://chat-app-backend-u5na.onrender.com/get-contacts", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: userEmail }),
-          });
+          const res = await fetch(
+            "https://chat-app-backend-u5na.onrender.com/get-contacts",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email: userEmail }),
+            }
+          );
           const data = await res.json();
 
           // DEDUPLICAR contactos por email
@@ -635,18 +670,25 @@
                 };">${contact.unread}</span>
               </div>
               <div class="contact-actions">
-                <button class="delete-chat" onclick="event.stopPropagation(); confirmDeleteChat('${contact.email}')">🗑️</button>
-                <button class="remove" onclick="event.stopPropagation(); confirmRemoveContact('${contact.email}')">❌</button>
+                <button class="delete-chat" onclick="event.stopPropagation(); confirmDeleteChat('${
+                  contact.email
+                }')">🗑️</button>
+                <button class="remove" onclick="event.stopPropagation(); confirmRemoveContact('${
+                  contact.email
+                }')">❌</button>
               </div>
             `;
             list.appendChild(li);
 
             // ⏳ Verifica mensajes no leídos
-            const badgeRes = await fetch("https://chat-app-backend-u5na.onrender.com/get-messages", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ user1: userEmail, user2: contactEmail }),
-            });
+            const badgeRes = await fetch(
+              "https://chat-app-backend-u5na.onrender.com/get-messages",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ user1: userEmail, user2: contactEmail }),
+              }
+            );
 
             const badgeData = await badgeRes.json();
             const hasUnread = badgeData.messages?.some(
@@ -665,14 +707,17 @@
 
       async function removeContact(contactEmail) {
         try {
-          const res = await fetch("https://chat-app-backend-u5na.onrender.com/remove-contact", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              user_email: userEmail,
-              contact_email: contactEmail,
-            }),
-          });
+          const res = await fetch(
+            "https://chat-app-backend-u5na.onrender.com/remove-contact",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                user_email: userEmail,
+                contact_email: contactEmail,
+              }),
+            }
+          );
 
           const result = await res.json();
           if (res.ok) {
@@ -704,7 +749,7 @@
         clearNotificationBadge(email);
 
         // Marcar mensajes como leídos
-        fetch("/mark-read", {
+        fetch("https://chat-app-backend-u5na.onrender.com/mark-read", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ user1: userEmail, user2: email }),
@@ -730,11 +775,14 @@
 
       async function fetchContactName(email) {
         try {
-        const res = await fetch("https://chat-app-backend-u5na.onrender.com/get-contacts", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: userEmail }),
-          });
+          const res = await fetch(
+            "https://chat-app-backend-u5na.onrender.com/get-contacts",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email: userEmail }),
+            }
+          );
           const data = await res.json();
           const contact = data.contacts.find((c) => c.email === email);
           return contact ? contact.name : email;
@@ -756,11 +804,14 @@
       }
 
       async function deleteChat(contactEmail) {
-        const res = await fetch("https://chat-app-backend-u5na.onrender.com/delete-chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user1: userEmail, user2: contactEmail }),
-        });
+        const res = await fetch(
+          "https://chat-app-backend-u5na.onrender.com/delete-chat",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user1: userEmail, user2: contactEmail }),
+          }
+        );
 
         const result = await res.json();
         if (res.ok) {
@@ -850,17 +901,20 @@
         }
 
         try {
-          const res = await fetch("https://chat-app-backend-u5na.onrender.com/update-profile", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: userEmail,
-              current_password: currentPassword,
-              new_name: newName,
-              new_email: newEmail,
-              new_password: newPassword,
-            }),
-          });
+          const res = await fetch(
+            "https://chat-app-backend-u5na.onrender.com/update-profile",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: userEmail,
+                current_password: currentPassword,
+                new_name: newName,
+                new_email: newEmail,
+                new_password: newPassword,
+              }),
+            }
+          );
 
           const data = await res.json();
 
@@ -918,11 +972,14 @@
         const list = document.getElementById("groupList");
         list.innerHTML = "<li>Cargando...</li>";
         try {
-          const res = await fetch("https://chat-app-backend-u5na.onrender.com/get-groups", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: userEmail }),
-          });
+          const res = await fetch(
+            "https://chat-app-backend-u5na.onrender.com/get-groups",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email: userEmail }),
+            }
+          );
           const data = await res.json();
           if (!data.groups || data.groups.length === 0) {
             list.innerHTML = "<li>No tienes grupos aún.</li>";
@@ -933,9 +990,15 @@
             const li = document.createElement("li");
             li.innerHTML = `
               <div>
-                <b>${group.name}</b> (${group.members.map(m => m === userEmail ? "Tú" : (contactListMap[m] || m)).join(", ")})
-                <button onclick="openGroupChat('${group.id}', '${group.name}')">Abrir chat</button>
-                <button onclick="openAddMembersModal('${group.id}')">Añadir miembros</button>
+                <b>${group.name}</b> (${group.members
+              .map((m) => (m === userEmail ? "Tú" : contactListMap[m] || m))
+              .join(", ")})
+                <button onclick="openGroupChat('${group.id}', '${
+              group.name
+            }')">Abrir chat</button>
+                <button onclick="openAddMembersModal('${
+                  group.id
+                }')">Añadir miembros</button>
               </div>
             `;
             list.appendChild(li);
@@ -955,34 +1018,34 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: userEmail }),
         })
-        .then(res => res.json())
-        .then(data => {
-          const group = data.groups.find(g => g.id === groupId);
-          fetch("https://chat-app-backend-u5na.onrender.com/get-contacts", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: userEmail }),
-          })
-          .then(res => res.json())
-          .then(contactsData => {
-            select.innerHTML = "";
-            for (const contact of contactsData.contacts) {
-              if (!group.members.includes(contact.email)) {
-                const opt = document.createElement("option");
-                opt.value = contact.email;
-                opt.textContent = `${contact.name} (${contact.email})`;
-                select.appendChild(opt);
-              }
-            }
-            if (select.options.length === 0) {
-              const opt = document.createElement("option");
-              opt.textContent = "No hay miembros disponibles";
-              opt.disabled = true;
-              select.appendChild(opt);
-            }
-            modal.style.display = "flex";
+          .then((res) => res.json())
+          .then((data) => {
+            const group = data.groups.find((g) => g.id === groupId);
+            fetch("https://chat-app-backend-u5na.onrender.com/get-contacts", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email: userEmail }),
+            })
+              .then((res) => res.json())
+              .then((contactsData) => {
+                select.innerHTML = "";
+                for (const contact of contactsData.contacts) {
+                  if (!group.members.includes(contact.email)) {
+                    const opt = document.createElement("option");
+                    opt.value = contact.email;
+                    opt.textContent = `${contact.name} (${contact.email})`;
+                    select.appendChild(opt);
+                  }
+                }
+                if (select.options.length === 0) {
+                  const opt = document.createElement("option");
+                  opt.textContent = "No hay miembros disponibles";
+                  opt.disabled = true;
+                  select.appendChild(opt);
+                }
+                modal.style.display = "flex";
+              });
           });
-        });
       }
 
       function closeAddMembersModal() {
@@ -990,22 +1053,27 @@
         currentAddGroupId = null;
       }
 
-      document.getElementById("addMembersForm").onsubmit = function(e) {
+      document.getElementById("addMembersForm").onsubmit = function (e) {
         e.preventDefault();
         const select = document.getElementById("addMembersSelect");
-        const members = Array.from(select.options).filter(opt => opt.selected).map(opt => opt.value);
+        const members = Array.from(select.options)
+          .filter((opt) => opt.selected)
+          .map((opt) => opt.value);
         if (!members.length) return;
         fetch("https://chat-app-backend-u5na.onrender.com/add-group-members", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ group_id: currentAddGroupId, new_members: members }),
+          body: JSON.stringify({
+            group_id: currentAddGroupId,
+            new_members: members,
+          }),
         })
-        .then(res => res.json())
-        .then(data => {
-          showAlert(data.message || data.error || "Miembros agregados.");
-          closeAddMembersModal();
-          loadGroups();
-        });
+          .then((res) => res.json())
+          .then((data) => {
+            showAlert(data.message || data.error || "Miembros agregados.");
+            closeAddMembersModal();
+            loadGroups();
+          });
       };
 
       // Actualiza el select de contactos para grupos
@@ -1013,11 +1081,14 @@
         const select = document.getElementById("groupMembersSelect");
         select.innerHTML = "";
         try {
-          const res = await fetch("https://chat-app-backend-u5na.onrender.com/get-contacts", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: userEmail }),
-          });
+          const res = await fetch(
+            "https://chat-app-backend-u5na.onrender.com/get-contacts",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email: userEmail }),
+            }
+          );
           const data = await res.json();
           if (!data.contacts || data.contacts.length === 0) {
             const opt = document.createElement("option");
@@ -1054,11 +1125,14 @@
         // Incluye al creador
         members.push(userEmail);
         try {
-          const res = await fetch("https://chat-app-backend-u5na.onrender.com/create-group", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, members }),
-          });
+          const res = await fetch(
+            "https://chat-app-backend-u5na.onrender.com/create-group",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name, members }),
+            }
+          );
           const data = await res.json();
           showAlert(data.message || data.error || "Grupo creado");
           loadGroups();
@@ -1084,11 +1158,14 @@
       }
 
       async function loadGroupChatHistory(groupId) {
-        const res = await fetch("https://chat-app-backend-u5na.onrender.com/get-group-messages", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ group_id: groupId }),
-        });
+        const res = await fetch(
+          "https://chat-app-backend-u5na.onrender.com/get-group-messages",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ group_id: groupId }),
+          }
+        );
         const data = await res.json();
         const container = document.getElementById("messages");
         container.innerHTML = "";
@@ -1106,7 +1183,7 @@
         const container = document.getElementById("messages");
         const el = document.createElement("div");
         const isOwn = msg.from === userEmail;
-        const displayName = isOwn ? "Tú" : (contactListMap[msg.from] || msg.from);
+        const displayName = isOwn ? "Tú" : contactListMap[msg.from] || msg.from;
 
         el.classList.add("chat-message");
         el.style.alignSelf = isOwn ? "flex-end" : "flex-start";
@@ -1129,7 +1206,7 @@
         appendGroupMessage({
           from: userEmail,
           message: message,
-          group_id: currentGroupId
+          group_id: currentGroupId,
         });
         input.value = "";
       }
@@ -1155,7 +1232,7 @@
 
       // Cambia showSection para cargar grupos y actualizar contactos de grupo,
       // y solo cargar contactos una vez al entrar a contactView
-      const origShowSection = function(id) {
+      const origShowSection = function (id) {
         sections.forEach(
           (s) => (document.getElementById(s).style.display = "none")
         );
@@ -1164,7 +1241,7 @@
       };
 
       showSection = function (id) {
-        origShowSection(id);  // Siempre cambia (aunque ya sea esa sección)
+        origShowSection(id); // Siempre cambia (aunque ya sea esa sección)
         if (id === "groupView") {
           loadGroups();
           updateGroupContactsSelect();
@@ -1201,7 +1278,7 @@
         showNotificationBadge(data.from);
       });
 
-      document.addEventListener("DOMContentLoaded", function() {
+      document.addEventListener("DOMContentLoaded", function () {
         showSection("contactView");
       });
     </script>
