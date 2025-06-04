@@ -1185,19 +1185,22 @@
         // Eliminar listeners viejos antes de añadir uno nuevo
         socket.off("receive_group_message");
 
-        // Unirse a la sala y esperar confirmación
-        socket.emit("join_group", { group_id: groupId });
-        await waitForGroupJoin(groupId);
-
-        loadGroupChatHistory(groupId);
-
-        // Agregar listener para recibir mensajes solo una vez por grupo abierto
-        socket.on("receive_group_message", async (msg) => {
-          msg.message = await decryptMessageAesGcm(msg.message || msg.text || "");
-          if (msg.group_id === currentGroupId) {
-            appendGroupMessage(msg);
-          }
-        });
+        // Unirse a la sala y esperar confirmación con manejo de errores robusto
+        try {
+          socket.emit("join_group", { group_id: groupId });
+          await waitForGroupJoin(groupId);
+          loadGroupChatHistory(groupId);
+          // Agregar listener para recibir mensajes solo una vez por grupo abierto
+          socket.on("receive_group_message", async (msg) => {
+            msg.message = await decryptMessageAesGcm(msg.message || msg.text || "");
+            if (msg.group_id === currentGroupId) {
+              appendGroupMessage(msg);
+            }
+          });
+        } catch (e) {
+          showSection("contactView");
+          showAlert("No se pudo entrar al grupo. Se muestran los contactos.");
+        }
       }
 
       async function loadGroupChatHistory(groupId) {
@@ -1311,11 +1314,18 @@
       });
 
       document.addEventListener("DOMContentLoaded", function () {
-        // Unirse automáticamente al último grupo abierto si existe
+        // Por defecto muestra contactos, salvo que haya un chat activo directo o grupal realmente reciente.
         const lastGroupId = localStorage.getItem("current_group_id");
         const lastGroupName = localStorage.getItem("current_group_name");
-        if (lastGroupId && lastGroupName) {
-          openGroupChat(lastGroupId, lastGroupName);
+        const lastDirectChat = localStorage.getItem("chat_with");
+        // Si hay un chat directo pendiente, entra directo a ese.
+        if (lastDirectChat) {
+          startChat(lastDirectChat);
+        } else if (lastGroupId && lastGroupName) {
+          openGroupChat(lastGroupId, lastGroupName).catch(() => {
+            showSection("contactView");
+            showAlert("No se pudo cargar el grupo. Se muestran los contactos.");
+          });
         } else {
           showSection("contactView");
         }
