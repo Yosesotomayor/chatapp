@@ -30,7 +30,7 @@
       if (!window.crypto || !window.crypto.subtle) {
         alert(
           "Tu navegador no soporta la generación de claves criptográficas necesarias. " +
-          "Por favor, usa un navegador moderno (Chrome, Firefox, Edge) y asegúrate de acceder vía http(s)."
+            "Por favor, usa un navegador moderno (Chrome, Firefox, Edge) y asegúrate de acceder vía http(s)."
         );
         throw new Error("Web Crypto API no disponible");
       }
@@ -41,7 +41,8 @@
 
         try {
           // Siempre genera un nuevo par de claves
-          const { publicKeyPEM, exportedPrivateKey } = await generateNewKeyPair();
+          const { publicKeyPEM, exportedPrivateKey } =
+            await generateNewKeyPair();
 
           const data = {
             name: document.getElementById("name").value.trim(),
@@ -59,15 +60,18 @@
           const result = await response.json();
           if (response.ok) {
             // Guarda solo si registro exitoso
-            localStorage.setItem("privateKeyJwk", JSON.stringify(exportedPrivateKey));
+            localStorage.setItem(
+              "privateKeyJwk",
+              JSON.stringify(exportedPrivateKey)
+            );
             localStorage.setItem("publicKeyPEM", publicKeyPEM);
             showAlert("Cuenta creada con éxito. Ahora puedes iniciar sesión.");
             document
               .getElementById("customAlert")
               .querySelector("button").onclick = function () {
-                closeAlert();
-                window.location.href = "../index/index.html";
-              };
+              closeAlert();
+              window.location.href = "../index/index.html";
+            };
           } else {
             // Si falla, elimina cualquier clave generada de este intento
             localStorage.removeItem("privateKeyJwk");
@@ -77,7 +81,9 @@
         } catch (err) {
           localStorage.removeItem("privateKeyJwk");
           localStorage.removeItem("publicKeyPEM");
-          showAlert("Error al generar tu clave de seguridad: " + (err?.message || err));
+          showAlert(
+            "Error al generar tu clave de seguridad: " + (err?.message || err)
+          );
         }
       });
 
@@ -87,25 +93,32 @@
         const pem = [
           "-----BEGIN PUBLIC KEY-----",
           ...base64.match(/.{1,64}/g),
-          "-----END PUBLIC KEY-----"
+          "-----END PUBLIC KEY-----",
         ].join("\n");
         return pem;
       }
 
       // Siempre genera nuevo par de claves (no reutiliza)
       async function generateNewKeyPair() {
-        const { publicKey, privateKey } = await window.crypto.subtle.generateKey(
-          {
-            name: "RSA-OAEP",
-            modulusLength: 2048,
-            publicExponent: new Uint8Array([1, 0, 1]),
-            hash: "SHA-256"
-          },
-          true,
-          ["encrypt", "decrypt"]
+        const { publicKey, privateKey } =
+          await window.crypto.subtle.generateKey(
+            {
+              name: "RSA-OAEP",
+              modulusLength: 2048,
+              publicExponent: new Uint8Array([1, 0, 1]),
+              hash: "SHA-256",
+            },
+            true,
+            ["encrypt", "decrypt"]
+          );
+        const exportedPrivateKey = await window.crypto.subtle.exportKey(
+          "jwk",
+          privateKey
         );
-        const exportedPrivateKey = await window.crypto.subtle.exportKey("jwk", privateKey);
-        const exportedPublicKey = await window.crypto.subtle.exportKey("spki", publicKey);
+        const exportedPublicKey = await window.crypto.subtle.exportKey(
+          "spki",
+          publicKey
+        );
         const publicKeyPEM = spkiToPEM(exportedPublicKey);
         return { publicKeyPEM, exportedPrivateKey };
       }
