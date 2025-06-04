@@ -738,6 +738,11 @@
         }
       });
       async function startChat(email) {
+        // --- Evitar solapamiento de chats directos y de grupo ---
+        // Al abrir un chat directo, limpia el contexto de grupo.
+        // Esto previene errores al alternar entre chats directos y grupales.
+        currentGroupId = null;
+        currentGroupName = null;
         chatWith = email;
         localStorage.setItem("chat_with", email);
         showSection("chatView");
@@ -1148,6 +1153,11 @@
       let currentGroupName = null;
 
       function openGroupChat(groupId, groupName) {
+        // --- Evitar solapamiento de chats directos y de grupo ---
+        // Al abrir un chat de grupo, limpia el contexto de chat directo.
+        // Esto previene errores al alternar entre chats directos y grupales.
+        chatWith = null;
+        localStorage.removeItem("chat_with");
         currentGroupId = groupId;
         currentGroupName = groupName;
         showSection("chatView");
