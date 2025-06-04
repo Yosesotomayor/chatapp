@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <title>Dashboard - ChatApp</title>
-    <link rel="stylesheet" href="/source/style.css" />
+    <link rel="stylesheet" href="style.css" />
     <script>
       if (!localStorage.getItem("user_email")) {
         window.location.href = "/";
@@ -213,7 +213,7 @@
       let globalAesKey = null;
 
       async function getGlobalAesKey() {
-        const res = await fetch("/api/get-global-aes");
+        const res = await fetch("https://chat-app-backend-u5na.onrender.com/api/get-global-aes");
         const data = await res.json();
         if (!data.key) {
           alert("No se pudo obtener la clave AES global.");
@@ -266,7 +266,7 @@
         }
       }
 
-      const socket = io("/api", {
+      const socket = io("https://chat-app-backend-u5na.onrender.com/api", {
         transports: ["polling"],
       });
 
@@ -361,7 +361,7 @@
         };
       }
       async function deleteChat(contactEmail) {
-        const res = await fetch("/api/delete-chat", {
+        const res = await fetch("https://chat-app-backend-u5na.onrender.com/api/delete-chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ user1: userEmail, user2: contactEmail }),
@@ -376,7 +376,7 @@
       }
       async function checkUnreadMessages() {
         try {
-          const res = await fetch("/api/get-contacts", {
+          const res = await fetch("https://chat-app-backend-u5na.onrender.com/api/get-contacts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: userEmail }),
@@ -386,7 +386,7 @@
           const contacts = data.contacts;
 
           for (const contact of contacts) {
-            const chatRes = await fetch("/api/get-messages", {
+            const chatRes = await fetch("https://chat-app-backend-u5na.onrender.com/api/get-messages", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -415,7 +415,7 @@
         sent.innerHTML = "<li>Cargando...</li>";
 
         try {
-          const res1 = await fetch("/api/get-requests", {
+          const res1 = await fetch("https://chat-app-backend-u5na.onrender.com/api/get-requests", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: userEmail }),
@@ -437,7 +437,7 @@
             });
           }
 
-          const res2 = await fetch("/api/get-sent-requests", {
+          const res2 = await fetch("https://chat-app-backend-u5na.onrender.com/api/get-sent-requests", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: userEmail }),
@@ -465,7 +465,7 @@
       }
 
       async function respondRequest(email, accepted) {
-        const res = await fetch("/api/respond-request", {
+        const res = await fetch("https://chat-app-backend-u5na.onrender.com/api/respond-request", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -481,7 +481,7 @@
       }
 
       async function cancelRequest(toEmail) {
-        const res = await fetch("/api/cancel-request", {
+        const res = await fetch("https://chat-app-backend-u5na.onrender.com/api/cancel-request", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ from_email: userEmail, to_email: toEmail }),
@@ -531,7 +531,7 @@
         };
       }
       function respondRequest(requesterEmail, accepted) {
-        fetch("/api/respond-request", {
+        fetch("https://chat-app-backend-u5na.onrender.com/api/respond-request", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -553,7 +553,7 @@
       }
 
       function cancelRequest(toEmail) {
-        fetch("/api/cancel-request", {
+        fetch("https://chat-app-backend-u5na.onrender.com/api/cancel-request", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ from_email: userEmail, to_email: toEmail }),
@@ -577,7 +577,7 @@
         }
 
         try {
-          const res = await fetch("/api/send-request", {
+          const res = await fetch("https://chat-app-backend-u5na.onrender.com/api/send-request", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -600,7 +600,7 @@
         const list = document.getElementById("contactList");
         list.innerHTML = "";
         try {
-          const res = await fetch("/api/get-contacts", {
+          const res = await fetch("https://chat-app-backend-u5na.onrender.com/api/get-contacts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: userEmail }),
@@ -642,7 +642,7 @@
             list.appendChild(li);
 
             // ⏳ Verifica mensajes no leídos
-            const badgeRes = await fetch("/api/get-messages", {
+            const badgeRes = await fetch("https://chat-app-backend-u5na.onrender.com/api/get-messages", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ user1: userEmail, user2: contactEmail }),
@@ -665,7 +665,7 @@
 
       async function removeContact(contactEmail) {
         try {
-          const res = await fetch("/api/remove-contact", {
+          const res = await fetch("https://chat-app-backend-u5na.onrender.com/api/remove-contact", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -730,7 +730,7 @@
 
       async function fetchContactName(email) {
         try {
-        const res = await fetch("/api/get-contacts", {
+        const res = await fetch("https://chat-app-backend-u5na.onrender.com/api/get-contacts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: userEmail }),
@@ -756,7 +756,7 @@
       }
 
       async function deleteChat(contactEmail) {
-        const res = await fetch("/api/delete-chat", {
+        const res = await fetch("https://chat-app-backend-u5na.onrender.com/api/delete-chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ user1: userEmail, user2: contactEmail }),
@@ -850,7 +850,7 @@
         }
 
         try {
-          const res = await fetch("/api/update-profile", {
+          const res = await fetch("https://chat-app-backend-u5na.onrender.com/api/update-profile", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -918,7 +918,7 @@
         const list = document.getElementById("groupList");
         list.innerHTML = "<li>Cargando...</li>";
         try {
-          const res = await fetch("/api/get-groups", {
+          const res = await fetch("https://chat-app-backend-u5na.onrender.com/api/get-groups", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: userEmail }),
@@ -950,7 +950,7 @@
         const modal = document.getElementById("addMembersModal");
         const select = document.getElementById("addMembersSelect");
         // Carga contactos que no están ya en el grupo
-        fetch("/api/get-groups", {
+        fetch("https://chat-app-backend-u5na.onrender.com/api/get-groups", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: userEmail }),
@@ -958,7 +958,7 @@
         .then(res => res.json())
         .then(data => {
           const group = data.groups.find(g => g.id === groupId);
-          fetch("/api/get-contacts", {
+          fetch("https://chat-app-backend-u5na.onrender.com/api/get-contacts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: userEmail }),
@@ -995,7 +995,7 @@
         const select = document.getElementById("addMembersSelect");
         const members = Array.from(select.options).filter(opt => opt.selected).map(opt => opt.value);
         if (!members.length) return;
-        fetch("/api/add-group-members", {
+        fetch("https://chat-app-backend-u5na.onrender.com/api/add-group-members", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ group_id: currentAddGroupId, new_members: members }),
@@ -1013,7 +1013,7 @@
         const select = document.getElementById("groupMembersSelect");
         select.innerHTML = "";
         try {
-          const res = await fetch("/api/get-contacts", {
+          const res = await fetch("https://chat-app-backend-u5na.onrender.com/api/get-contacts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: userEmail }),
@@ -1054,7 +1054,7 @@
         // Incluye al creador
         members.push(userEmail);
         try {
-          const res = await fetch("/api/create-group", {
+          const res = await fetch("https://chat-app-backend-u5na.onrender.com/api/create-group", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name, members }),
@@ -1084,7 +1084,7 @@
       }
 
       async function loadGroupChatHistory(groupId) {
-        const res = await fetch("/api/get-group-messages", {
+        const res = await fetch("https://chat-app-backend-u5na.onrender.com/api/get-group-messages", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ group_id: groupId }),
