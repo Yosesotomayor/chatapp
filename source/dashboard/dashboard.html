@@ -1289,12 +1289,7 @@
 
       showSection = function (id) {
         origShowSection(id);
-        if (id === "chatView") {
-          // Limpiar historial y input SIEMPRE que entres a chatView
-          const messages = document.getElementById("messages");
-          if (messages) messages.innerHTML = "";
-          document.getElementById("inputMessage").value = "";
-        }
+        // Ya NO limpiamos mensajes aquí: la limpieza ocurre en startChat/openGroupChat.
         if (id === "groupView") {
           loadGroups();
           updateGroupContactsSelect();
