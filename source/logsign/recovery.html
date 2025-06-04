@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Recuperar contraseña - ChatApp</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .hidden {
+        display: none;
+      }
+      .msg {
+        margin: 12px 0;
+      }
+    </style>
+  </head>
+  <body class="signup">
+    <div class="signupContainer">
+      <a href="login.html" class="back-button">← Regresar a login</a>
+      <h2>Recuperar contraseña</h2>
+
+      <!-- Paso 1: solicitar correo -->
+      <form id="requestForm">
+        <label for="email">E-Mail</label>
+        <input type="email" id="email" required />
+        <button type="submit" id="btnSendCode">Enviar código</button><span id="spinner1" style="display:none;"> Enviando...</span>
+      </form>
+
+      <div id="requestMsg" class="msg"></div>
+
+      <!-- Paso 2: ingresar código y nueva contraseña -->
+      <form id="resetForm" class="hidden">
+        <label for="code">Código de recuperación</label>
+        <input type="text" id="code" maxlength="6" required />
+
+        <label for="newPassword">Nueva contraseña</label>
+        <input type="password" id="newPassword" required />
+
+        <button type="submit" id="btnChangePass">Cambiar contraseña</button><span id="spinner2" style="display:none;"> Verificando...</span>
+      </form>
+
+      <div id="resetMsg" class="msg"></div>
+    </div>
+
+    <script>
+const requestForm = document.getElementById("requestForm");
+const resetForm = document.getElementById("resetForm");
+const requestMsg = document.getElementById("requestMsg");
+const resetMsg = document.getElementById("resetMsg");
+const btnSendCode = document.getElementById("btnSendCode");
+const btnChangePass = document.getElementById("btnChangePass");
+const spinner1 = document.getElementById("spinner1");
+const spinner2 = document.getElementById("spinner2");
+let emailActual = "";
+
+requestForm.onsubmit = async (e) => {
+  e.preventDefault();
+  requestMsg.textContent = "";
+  btnSendCode.disabled = true;
+  spinner1.style.display = "inline";
+  const email = document.getElementById("email").value.trim().toLowerCase();
+  try {
+    const res = await fetch("http://10.48.73.169:5050/request-reset-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    let data = {};
+    try { data = await res.json(); } catch { /* ignore */ }
+
+    if (res.status === 404) {
+      requestMsg.style.color = "red";
+      requestMsg.textContent = "El correo no está registrado.";
+    } else if (res.status === 405) {
+      requestMsg.style.color = "red";
+      requestMsg.textContent = "Error de servidor: método no permitido (405). Revisa tu backend.";
+    } else if (!res.ok) {
+      requestMsg.style.color = "red";
+      requestMsg.textContent = data.error || "Error desconocido";
+    } else {
+      requestMsg.style.color = "green";
+      requestMsg.textContent = data.message || "Código enviado al correo.";
+      requestForm.classList.add("hidden");
+      resetForm.classList.remove("hidden");
+      resetForm.reset();
+      emailActual = email;
+      resetMsg.textContent = "";
+    }
+  } catch (err) {
+    requestMsg.style.color = "red";
+    requestMsg.textContent = "No se pudo conectar al servidor.";
+  }
+  btnSendCode.disabled = false;
+  spinner1.style.display = "none";
+};
+
+resetForm.onsubmit = async (e) => {
+  e.preventDefault();
+  resetMsg.textContent = "";
+  btnChangePass.disabled = true;
+  spinner2.style.display = "inline";
+  const code = document.getElementById("code").value.trim();
+  const new_password = document.getElementById("newPassword").value;
+  try {
+    const res = await fetch("http://10.48.73.169:5050/verify-reset-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: emailActual, code, new_password }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      resetMsg.style.color = "green";
+      resetMsg.textContent = data.message || "Contraseña cambiada correctamente.";
+      resetForm.reset();
+    } else {
+      resetMsg.style.color = "red";
+      resetMsg.textContent = data.error || "Código incorrecto o error inesperado.";
+    }
+  } catch (err) {
+    resetMsg.style.color = "red";
+    resetMsg.textContent = "No se pudo conectar al servidor.";
+  }
+  btnChangePass.disabled = false;
+  spinner2.style.display = "none";
+};
+    </script>
+  </body>
+</html>

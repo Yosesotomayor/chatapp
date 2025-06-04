@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Dashboard - ChatApp</title>
+    <link rel="stylesheet" href="/source/style.css" />
+    <script>
+      if (!localStorage.getItem("user_email")) {
+        window.location.href = "/";
+      }
+    </script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  </head>
+  <body class="dashboard">
+    <div class="dashboard-container">
+      <!-- Menú lateral -->
+      <div class="sidebar">
+        <h2>🚀 <span style="color: #4caf50">Menú</span></h2>
+        <button class="menu-button" onclick="showSection('contactView')">
+          👥 Ver contactos
+        </button>
+        <button class="menu-button" onclick="showSection('groupView')">
+          👥 Grupos
+        </button>
+        <button class="menu-button" onclick="showSection('addContactView')">
+          ➕ Agregar contacto
+        </button>
+        <button class="menu-button" onclick="showSection('requestsView')">
+          📩 Solicitudes
+        </button>
+        <button class="menu-button" onclick="showSection('profileView')">
+          ⚙️ Perfil
+        </button>
+        <a class="menu-button logout" href="/">🚪 Cerrar sesión</a>
+      </div>
+
+      <!-- Contenido principal -->
+      <div class="main-content">
+        <!-- Vista: Contactos -->
+        <div id="contactView" class="section">
+          <h2>👥 Tus contactos</h2>
+          <ul id="contactList">
+            <li>Cargando...</li>
+          </ul>
+        </div>
+
+        <!-- Vista: Grupos -->
+        <div id="groupView" class="section group-section" style="display: none">
+          <h2 class="group-title">👥 Grupos</h2>
+          <form id="createGroupForm">
+            <input
+              type="text"
+              id="groupNameInput"
+              placeholder="Nombre del grupo"
+              required
+            />
+            <select id="groupMembersSelect" multiple required></select>
+            <button type="submit">Crear grupo</button>
+          </form>
+          <!-- Modal para añadir miembros a grupo -->
+          <div id="addMembersModal" class="modal" style="display:none;">
+            <div class="modal-content">
+              <h3>Añadir miembros al grupo</h3>
+              <form id="addMembersForm">
+                <select id="addMembersSelect" multiple style="width:100%; margin-bottom:1em;"></select>
+                <button type="submit">Agregar miembros</button>
+                <button type="button" onclick="closeAddMembersModal()">Cancelar</button>
+              </form>
+            </div>
+          </div>
+          <ul class="group-list" id="groupList">
+            <li>Cargando...</li>
+          </ul>
+        </div>
+        <!-- Vista: Agregar contacto -->
+        <div id="addContactView" class="section" style="display: none">
+          <h2>➕ Enviar solicitud de contacto</h2>
+          <form id="requestForm">
+            <input
+              type="email"
+              id="toEmail"
+              placeholder="Email del usuario"
+              required
+            />
+            <button type="submit">Enviar solicitud</button>
+          </form>
+          <p id="requestMsg" class="message"></p>
+        </div>
+
+        <!-- Vista: Solicitudes -->
+        <div id="requestsView" class="section" style="display: none">
+          <h2>📥 Solicitudes recibidas</h2>
+          <ul id="receivedList">
+            <li>• Cargando...</li>
+          </ul>
+
+          <h2>📤 Solicitudes enviadas</h2>
+          <ul id="sentList">
+            <li>• Cargando...</li>
+          </ul>
+        </div>
+
+        <!-- Vista: Perfil -->
+        <div
+          id="profileView"
+          class="profile-section profile"
+          style="display: none"
+        >
+          <h2>👤 Mi perfil</h2>
+          <p>Nombre actual: <strong id="profileName"></strong></p>
+          <p>Correo actual: <strong id="profileEmail"></strong></p>
+          <button class="edit-button" onclick="toggleEditProfile()">
+            Editar
+          </button>
+
+          <form id="editProfileForm" style="display: none">
+            <input
+              type="text"
+              id="newName"
+              placeholder="Nuevo nombre (opcional)"
+            />
+            <input
+              type="email"
+              id="newEmail"
+              placeholder="Nuevo correo (opcional)"
+            />
+            <input
+              type="password"
+              id="newPassword"
+              placeholder="Nueva contraseña (opcional)"
+            />
+            <input
+              type="password"
+              id="currentPassword"
+              placeholder="Contraseña actual (requerida)"
+              required
+            />
+            <button type="submit">Guardar cambios</button>
+          </form>
+        </div>
+
+        <!-- Vista: Chat -->
+        <div id="chatView" style="display: none">
+          <div class="chat-header">
+            <h2>💬 ChatApp</h2>
+            <p>🔐 Conectado como: <span id="connectedUser">...</span></p>
+            <p>📨 Chateando con: <span id="chattingWith">...</span></p>
+          </div>
+          <div id="messages" class="chat-box"></div>
+          <div class="chat-input">
+            <input
+              id="inputMessage"
+              type="text"
+              placeholder="Escribe un mensaje..."
+            />
+            <button class="send-button" onclick="sendMessage()">Enviar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="confirmModal" class="modal">
+      <div class="modal-content">
+        <p id="confirmMessage">
+          ¿Estás seguro de que deseas eliminar este contacto?
+        </p>
+        <div class="modal-actions">
+          <button id="confirmYes">Sí</button>
+          <button id="confirmNo">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal personalizado para confirmación de solicitud -->
+    <div id="successModal" class="modal" style="display: none">
+      <div class="modal-content">
+        <p id="successText">Solicitud aceptada correctamente</p>
+        <button onclick="closeSuccess()">Aceptar</button>
+      </div>
+    </div>
+
+    <div id="customAlert" class="modal" style="display: none">
+      <div class="modal-content">
+        <p id="alertText">Mensaje de alerta</p>
+        <button onclick="closeAlert()">Aceptar</button>
+      </div>
+    </div>
+
+    <div id="confirmCancelModal" class="modal" style="display: none">
+      <div class="modal-content">
+        <p id="confirmCancelText">¿Cancelar esta solicitud?</p>
+        <div class="modal-actions">
+          <button id="cancelConfirmYes">Sí</button>
+          <button id="cancelConfirmNo">No</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="confirmModal" class="modal">
+      <div class="modal-content">
+        <p id="confirmMessage">
+          ¿Estás seguro de que deseas eliminar este contacto?
+        </p>
+        <div class="modal-actions">
+          <button id="confirmYes">Sí</button>
+          <button id="confirmNo">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // --- Utilidades de cifrado AES global ---
+      let globalAesKey = null;
+
+      async function getGlobalAesKey() {
+        const res = await fetch("http://10.48.73.169:5050/get-global-aes");
+        const data = await res.json();
+        if (!data.key) {
+          alert("No se pudo obtener la clave AES global.");
+          return;
+        }
+        const raw = Uint8Array.from(atob(data.key), (c) => c.charCodeAt(0));
+        globalAesKey = await crypto.subtle.importKey(
+          "raw",
+          raw,
+          "AES-GCM",
+          false,
+          ["encrypt", "decrypt"]
+        );
+      }
+      getGlobalAesKey();
+
+      async function encryptMessageAesGcm(plainText) {
+        if (!globalAesKey) throw new Error("No AES key available");
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const encoded = new TextEncoder().encode(plainText);
+        const ciphertext = await crypto.subtle.encrypt(
+          { name: "AES-GCM", iv },
+          globalAesKey,
+          encoded
+        );
+        const ivBase64 = btoa(String.fromCharCode(...iv));
+        const cipherBase64 = btoa(
+          String.fromCharCode(...new Uint8Array(ciphertext))
+        );
+        return `${ivBase64}.${cipherBase64}`;
+      }
+
+      async function decryptMessageAesGcm(payload) {
+        if (!globalAesKey) return "[Sin clave AES]";
+        if (!payload.includes(".")) return payload;
+        const [ivBase64, cipherBase64] = payload.split(".");
+        const iv = Uint8Array.from(atob(ivBase64), (c) => c.charCodeAt(0));
+        const ciphertext = Uint8Array.from(atob(cipherBase64), (c) =>
+          c.charCodeAt(0)
+        );
+        try {
+          const decrypted = await crypto.subtle.decrypt(
+            { name: "AES-GCM", iv },
+            globalAesKey,
+            ciphertext
+          );
+          return new TextDecoder().decode(decrypted);
+        } catch {
+          return "[No se pudo descifrar]";
+        }
+      }
+
+      const socket = io("http://10.48.73.169:5050", {
+        transports: ["polling"],
+      });
+
+      const userEmail = localStorage.getItem("user_email");
+      const userName = localStorage.getItem("user_name");
+      let chatWith = localStorage.getItem("chat_with");
+
+      document.getElementById("connectedUser").textContent =
+        userName || "Desconocido";
+      document.getElementById("profileName").textContent = userName || "";
+      document.getElementById("profileEmail").textContent = userEmail || "";
+
+      const sections = [
+        "contactView",
+        "addContactView",
+        "requestsView",
+        "profileView",
+        "chatView",
+        "groupView",
+      ];
+      let currentSection = "contactView";
+      let contactListMap = {};
+
+      socket.on("connect", () => {
+        console.log("[DEBUG] Conectado a socket.io con ID:", socket.id);
+
+        socket.emit("join_chat", {
+          user1: userEmail,
+          user2: userEmail, // se une a su propia sala para notificaciones
+        });
+      });
+      function updateNotificationBadge(email, count) {
+        email = email.trim().toLowerCase();
+        const box = document.querySelector(
+          `.contact-box[data-email="${email}"]`
+        );
+        if (!box) return;
+
+        let badge = box.querySelector(".notification-badge");
+        if (!badge) {
+          badge = document.createElement("span");
+          badge.classList.add("notification-badge");
+          box.appendChild(badge);
+        }
+
+        const current = parseInt(badge.textContent) || 0;
+        if (current !== count) {
+          badge.textContent = count;
+          badge.style.display = count > 0 ? "inline-block" : "none";
+
+          badge.classList.remove("pulse");
+          void badge.offsetWidth; // reflow para reiniciar animación
+          if (count > 0) badge.classList.add("pulse");
+        }
+      }
+
+      function confirmDeleteChat(email) {
+        const modal = document.getElementById("confirmModal");
+        const message = document.getElementById("confirmMessage");
+        const btnYes = document.getElementById("confirmYes");
+        const btnNo = document.getElementById("confirmNo");
+
+        message.textContent = `¿Deseas eliminar todo el historial de chat con ${email}?`;
+        modal.style.display = "flex";
+
+        btnYes.onclick = async () => {
+          modal.style.display = "none";
+          await deleteChat(email);
+        };
+
+        btnNo.onclick = () => {
+          modal.style.display = "none";
+        };
+      }
+
+      function confirmRemoveContact(email) {
+        const modal = document.getElementById("confirmModal");
+        const message = document.getElementById("confirmMessage");
+        const btnYes = document.getElementById("confirmYes");
+        const btnNo = document.getElementById("confirmNo");
+
+        message.textContent = `¿Seguro que deseas eliminar a ${email} de tus contactos?`;
+        modal.style.display = "flex";
+
+        btnYes.onclick = async () => {
+          modal.style.display = "none";
+          await removeContact(email);
+        };
+
+        btnNo.onclick = () => {
+          modal.style.display = "none";
+        };
+      }
+      async function deleteChat(contactEmail) {
+        const res = await fetch("http://10.48.73.169:5050/delete-chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user1: userEmail, user2: contactEmail }),
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+          showAlert("Historial de chat eliminado.");
+        } else {
+          showAlert(result.error || "No se pudo eliminar el chat.");
+        }
+      }
+      async function checkUnreadMessages() {
+        try {
+          const res = await fetch("http://10.48.73.169:5050/get-contacts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: userEmail }),
+          });
+
+          const data = await res.json();
+          const contacts = data.contacts;
+
+          for (const contact of contacts) {
+            const chatRes = await fetch("http://10.48.73.169:5050/get-messages", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                user1: userEmail,
+                user2: contact.email,
+              }),
+            });
+
+            const chatData = await chatRes.json();
+            const unreadCount =
+              chatData.messages?.filter(
+                (msg) => msg.to === userEmail && msg.read === false
+              ).length || 0;
+
+            updateNotificationBadge(contact.email, unreadCount);
+          }
+        } catch (err) {
+          console.error("[ERROR] Al revisar mensajes no leídos", err);
+        }
+      }
+
+      async function loadRequests() {
+        const received = document.getElementById("receivedList");
+        const sent = document.getElementById("sentList");
+        received.innerHTML = "<li>Cargando...</li>";
+        sent.innerHTML = "<li>Cargando...</li>";
+
+        try {
+          const res1 = await fetch("http://10.48.73.169:5050/get-requests", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: userEmail }),
+          });
+          const data1 = await res1.json();
+
+          if (data1.requests.length === 0) {
+            received.innerHTML = "<li>No tienes solicitudes pendientes.</li>";
+          } else {
+            received.innerHTML = "";
+            data1.requests.forEach((email) => {
+              const li = document.createElement("li");
+              li.innerHTML = `
+          ${email}
+          <button onclick="respondRequest('${email}', true)">✔️</button>
+          <button onclick="respondRequest('${email}', false)">❌</button>
+        `;
+              received.appendChild(li);
+            });
+          }
+
+          const res2 = await fetch("http://10.48.73.169:5050/get-sent-requests", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: userEmail }),
+          });
+          const data2 = await res2.json();
+
+          if (data2.sent.length === 0) {
+            sent.innerHTML = "<li>No has enviado solicitudes.</li>";
+          } else {
+            sent.innerHTML = "";
+            data2.sent.forEach((email) => {
+              const li = document.createElement("li");
+              li.innerHTML = `
+          ${email}
+          <button onclick="confirmCancelRequest('${email}')">❌ Cancelar</button>
+        `;
+              sent.appendChild(li);
+            });
+          }
+        } catch (err) {
+          console.error("[ERROR] al cargar solicitudes:", err);
+          received.innerHTML = "<li>Error al cargar.</li>";
+          sent.innerHTML = "<li>Error al cargar.</li>";
+        }
+      }
+
+      async function respondRequest(email, accepted) {
+        const res = await fetch("http://10.48.73.169:5050/respond-request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_email: userEmail,
+            requester_email: email,
+            accepted,
+          }),
+        });
+
+        const data = await res.json();
+        showAlert(data.message || "Solicitud procesada.");
+        loadRequests();
+      }
+
+      async function cancelRequest(toEmail) {
+        const res = await fetch("http://10.48.73.169:5050/cancel-request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ from_email: userEmail, to_email: toEmail }),
+        });
+
+        const result = await res.json();
+        showAlert(result.message || "Solicitud cancelada.");
+        loadRequests();
+      }
+
+      // Modal de confirmación para cancelar
+      function confirmCancelRequest(email) {
+        const modal = document.getElementById("confirmCancelModal");
+        const text = document.getElementById("confirmCancelText");
+        const yesBtn = document.getElementById("cancelConfirmYes");
+        const noBtn = document.getElementById("cancelConfirmNo");
+
+        text.textContent = `¿Cancelar la solicitud a ${email}?`;
+        modal.style.display = "flex";
+
+        yesBtn.onclick = () => {
+          modal.style.display = "none";
+          cancelRequest(email);
+        };
+
+        noBtn.onclick = () => {
+          modal.style.display = "none";
+        };
+      }
+
+      function showCancelConfirmation(email) {
+        const modal = document.getElementById("confirmCancelModal");
+        const text = document.getElementById("confirmCancelText");
+        const yesBtn = document.getElementById("cancelConfirmYes");
+        const noBtn = document.getElementById("cancelConfirmNo");
+
+        text.textContent = `¿Cancelar solicitud enviada a ${email}?`;
+        modal.style.display = "flex";
+
+        yesBtn.onclick = () => {
+          cancelRequest(email);
+          modal.style.display = "none";
+        };
+
+        noBtn.onclick = () => {
+          modal.style.display = "none";
+        };
+      }
+      function respondRequest(requesterEmail, accepted) {
+        fetch("http://10.48.73.169:5050/respond-request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_email: userEmail,
+            requester_email: requesterEmail,
+            accepted: accepted,
+          }),
+        })
+          .then((res) => res.json())
+          .then(() => {
+            showAlert(
+              accepted
+                ? "Solicitud aceptada correctamente"
+                : "Solicitud rechazada"
+            );
+            loadRequests();
+            loadContacts(); // actualizar lista
+          });
+      }
+
+      function cancelRequest(toEmail) {
+        fetch("http://10.48.73.169:5050/cancel-request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ from_email: userEmail, to_email: toEmail }),
+        })
+          .then((res) => res.json())
+          .then(() => {
+            showAlert("Solicitud cancelada");
+            loadRequests();
+          });
+      }
+      document.getElementById("requestForm").onsubmit = async function (e) {
+        e.preventDefault();
+        const toEmail = document
+          .getElementById("toEmail")
+          .value.trim()
+          .toLowerCase();
+
+        if (!toEmail || toEmail === userEmail) {
+          showAlert("Correo inválido o no puedes agregarte a ti mismo.");
+          return;
+        }
+
+        try {
+          const res = await fetch("http://10.48.73.169:5050/send-request", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              from_email: userEmail,
+              to_email: toEmail,
+            }),
+          });
+
+          const data = await res.json();
+          document.getElementById("requestMsg").textContent =
+            data.message || data.error;
+          document.getElementById("toEmail").value = ""; // limpiar input
+        } catch (err) {
+          console.error("[ERROR] Al enviar solicitud:", err);
+          showAlert("Error al enviar solicitud.");
+        }
+      };
+
+      async function loadContacts() {
+        const list = document.getElementById("contactList");
+        list.innerHTML = "";
+        try {
+          const res = await fetch("http://10.48.73.169:5050/get-contacts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: userEmail }),
+          });
+          const data = await res.json();
+
+          // DEDUPLICAR contactos por email
+          const seen = new Set();
+          const dedupedContacts = [];
+          for (const contact of data.contacts) {
+            if (!seen.has(contact.email)) {
+              dedupedContacts.push(contact);
+              seen.add(contact.email);
+            }
+          }
+
+          if (dedupedContacts.length === 0) {
+            list.innerHTML = "<li>No tienes contactos aún.</li>";
+            return;
+          }
+
+          for (const contact of dedupedContacts) {
+            const contactEmail = contact.email;
+            contactListMap[contactEmail] = contact.name;
+
+            const li = document.createElement("li");
+            li.innerHTML = `
+              <div class="contact-box" data-email="${contactEmail}" onclick="startChat('${contactEmail}')">
+                ${contact.name} (${contactEmail})
+                <span class="notification-badge" style="display: ${
+                  contact.unread > 0 ? "inline-block" : "none"
+                };">${contact.unread}</span>
+              </div>
+              <div class="contact-actions">
+                <button class="delete-chat" onclick="event.stopPropagation(); confirmDeleteChat('${contact.email}')">🗑️</button>
+                <button class="remove" onclick="event.stopPropagation(); confirmRemoveContact('${contact.email}')">❌</button>
+              </div>
+            `;
+            list.appendChild(li);
+
+            // ⏳ Verifica mensajes no leídos
+            const badgeRes = await fetch("http://10.48.73.169:5050/get-messages", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ user1: userEmail, user2: contactEmail }),
+            });
+
+            const badgeData = await badgeRes.json();
+            const hasUnread = badgeData.messages?.some(
+              (m) => m.to === userEmail && m.read === false
+            );
+
+            if (hasUnread) {
+              showNotificationBadge(contactEmail);
+            }
+          }
+        } catch (err) {
+          console.error("[ERROR] Cargando contactos:", err);
+          list.innerHTML = "<li>Error al cargar contactos.</li>";
+        }
+      }
+
+      async function removeContact(contactEmail) {
+        try {
+          const res = await fetch("http://10.48.73.169:5050/remove-contact", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user_email: userEmail,
+              contact_email: contactEmail,
+            }),
+          });
+
+          const result = await res.json();
+          if (res.ok) {
+            showAlert("Contacto eliminado correctamente.");
+            loadContacts(); // 🔄 Recargar lista
+          } else {
+            showAlert(result.error || "No se pudo eliminar el contacto.");
+          }
+        } catch (err) {
+          console.error("[ERROR] al eliminar contacto:", err);
+          showAlert("Error inesperado al eliminar contacto.");
+        }
+      }
+      socket.on("contacts_updated", (data) => {
+        const currentUser = userEmail?.trim().toLowerCase();
+        if (data.email?.trim().toLowerCase() === currentUser) {
+          loadContacts(); // Recargar contactos automáticamente
+        }
+      });
+      async function startChat(email) {
+        chatWith = email;
+        localStorage.setItem("chat_with", email);
+        showSection("chatView");
+
+        fetchContactName(email).then((name) => {
+          document.getElementById("chattingWith").textContent = name;
+        });
+
+        clearNotificationBadge(email);
+
+        // Marcar mensajes como leídos
+        fetch("http://10.48.73.169:5050/mark-read", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user1: userEmail, user2: email }),
+        });
+
+        socket.emit("update_active_chat", {
+          user: userEmail,
+          active_with: email,
+        });
+
+        socket.emit("join_chat", {
+          user1: userEmail,
+          user2: email,
+        });
+
+        // No es necesario handshake ni claves, flujo simplificado
+      }
+
+      socket.on("connect", () => {
+        console.log("[DEBUG] Conectado a socket.io con ID:", socket.id);
+        setInterval(checkUnreadMessages, 2500);
+      });
+
+      async function fetchContactName(email) {
+        try {
+          const res = await fetch("http://10.48.73.169:5050/get-contacts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: userEmail }),
+          });
+          const data = await res.json();
+          const contact = data.contacts.find((c) => c.email === email);
+          return contact ? contact.name : email;
+        } catch {
+          return email;
+        }
+      }
+
+      function appendMessage(msg) {
+        const container = document.getElementById("messages");
+        const el = document.createElement("div");
+        const isOwn = msg.from === userEmail;
+        const displayName = isOwn ? "Tú" : contactListMap[msg.from] || msg.from;
+
+        el.classList.add("chat-message");
+        el.style.alignSelf = isOwn ? "flex-end" : "flex-start";
+        el.innerHTML = `<strong>${displayName}:</strong> ${msg.message}`;
+        container.appendChild(el);
+      }
+
+      async function deleteChat(contactEmail) {
+        const res = await fetch("http://10.48.73.169:5050/delete-chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user1: userEmail, user2: contactEmail }),
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+          showAlert("Historial de chat eliminado.");
+        } else {
+          showAlert(result.error || "No se pudo eliminar el chat.");
+        }
+      }
+      function showAlert(msg) {
+        const modal = document.getElementById("customAlert");
+        document.getElementById("alertText").textContent = msg;
+        modal.style.display = "flex";
+      }
+      function closeAlert() {
+        document.getElementById("customAlert").style.display = "none";
+      }
+
+      function showNotificationBadge(email, count = 1) {
+        email = email.trim().toLowerCase();
+        const contactBoxes = document.querySelectorAll(".contact-box");
+
+        contactBoxes.forEach((box) => {
+          const boxEmail = box.dataset.email?.trim().toLowerCase();
+          if (boxEmail === email) {
+            let badge = box.querySelector(".notification-badge");
+
+            if (!badge) {
+              badge = document.createElement("span");
+              badge.classList.add("notification-badge");
+              box.appendChild(badge);
+            }
+
+            const currentCount = parseInt(badge.textContent) || 0;
+
+            // 🛑 Si el conteo ya está bien y visible, no hagas nada
+            if (
+              currentCount === count &&
+              badge.style.display === "inline-block"
+            )
+              return;
+
+            badge.textContent = count;
+            badge.style.display = count > 0 ? "inline-block" : "none";
+
+            // 🌀 Solo animar si el valor cambia
+            badge.classList.remove("pulse");
+            void badge.offsetWidth; // reflow para reiniciar animación si aplica
+            if (count > 0) badge.classList.add("pulse");
+          }
+        });
+      }
+
+      function clearNotificationBadge(email) {
+        const contactBoxes = document.querySelectorAll(".contact-box");
+        contactBoxes.forEach((box) => {
+          if (box.dataset.email === email) {
+            const badge = box.querySelector(".notification-badge");
+            if (badge) {
+              badge.style.display = "none";
+              badge.textContent = "0";
+            }
+          }
+        });
+      }
+
+      function toggleEditProfile() {
+        const form = document.getElementById("editProfileForm");
+        form.style.display = form.style.display === "none" ? "block" : "none";
+      }
+
+      document.getElementById("editProfileForm").onsubmit = async function (e) {
+        e.preventDefault();
+
+        const newName = document.getElementById("newName").value.trim();
+        const newEmail = document
+          .getElementById("newEmail")
+          .value.trim()
+          .toLowerCase();
+        const newPassword = document.getElementById("newPassword").value.trim();
+        const currentPassword = document
+          .getElementById("currentPassword")
+          .value.trim();
+
+        if (!currentPassword) {
+          showAlert("Debes ingresar tu contraseña actual para hacer cambios.");
+          return;
+        }
+
+        try {
+          const res = await fetch("http://10.48.73.169:5050/update-profile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: userEmail,
+              current_password: currentPassword,
+              new_name: newName,
+              new_email: newEmail,
+              new_password: newPassword,
+            }),
+          });
+
+          const data = await res.json();
+
+          if (res.ok) {
+            if (newName) {
+              localStorage.setItem("user_name", newName);
+              document.getElementById("profileName").textContent = newName;
+            }
+
+            if (newEmail && newEmail !== userEmail) {
+              localStorage.setItem("user_email", newEmail);
+              document.getElementById("profileEmail").textContent = newEmail;
+            }
+
+            showAlert(data.message || "Perfil actualizado.");
+            document.getElementById("editProfileForm").style.display = "none";
+          } else {
+            showAlert(data.error || "No se pudo actualizar el perfil.");
+          }
+        } catch (err) {
+          console.error("[ERROR] al actualizar perfil:", err);
+          showAlert("Error inesperado al actualizar perfil.");
+        }
+      };
+
+      async function sendMessage() {
+        const input = document.getElementById("inputMessage");
+        const message = input.value.trim();
+        if (!message || !globalAesKey) return;
+        const encrypted = await encryptMessageAesGcm(message);
+        socket.emit("send_message", {
+          from: userEmail,
+          to: chatWith,
+          message: encrypted,
+        });
+        input.value = "";
+      }
+
+      socket.on("chat_history", async (msgs) => {
+        const container = document.getElementById("messages");
+        container.innerHTML = "";
+        for (const msg of msgs) {
+          msg.message = await decryptMessageAesGcm(msg.message);
+          appendMessage(msg);
+        }
+        container.scrollTop = container.scrollHeight;
+      });
+
+      // GRUPOS
+
+      // --- Añadir miembros a grupo ---
+      let currentAddGroupId = null;
+
+      async function loadGroups() {
+        const list = document.getElementById("groupList");
+        list.innerHTML = "<li>Cargando...</li>";
+        try {
+          const res = await fetch("http://10.48.73.169:5050/get-groups", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: userEmail }),
+          });
+          const data = await res.json();
+          if (!data.groups || data.groups.length === 0) {
+            list.innerHTML = "<li>No tienes grupos aún.</li>";
+            return;
+          }
+          list.innerHTML = "";
+          data.groups.forEach((group) => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+              <div>
+                <b>${group.name}</b> (${group.members.map(m => m === userEmail ? "Tú" : (contactListMap[m] || m)).join(", ")})
+                <button onclick="openGroupChat('${group.id}', '${group.name}')">Abrir chat</button>
+                <button onclick="openAddMembersModal('${group.id}')">Añadir miembros</button>
+              </div>
+            `;
+            list.appendChild(li);
+          });
+        } catch (err) {
+          list.innerHTML = "<li>Error al cargar grupos.</li>";
+        }
+      }
+
+      function openAddMembersModal(groupId) {
+        currentAddGroupId = groupId;
+        const modal = document.getElementById("addMembersModal");
+        const select = document.getElementById("addMembersSelect");
+        // Carga contactos que no están ya en el grupo
+        fetch("http://10.48.73.169:5050/get-groups", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: userEmail }),
+        })
+        .then(res => res.json())
+        .then(data => {
+          const group = data.groups.find(g => g.id === groupId);
+          fetch("http://10.48.73.169:5050/get-contacts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: userEmail }),
+          })
+          .then(res => res.json())
+          .then(contactsData => {
+            select.innerHTML = "";
+            for (const contact of contactsData.contacts) {
+              if (!group.members.includes(contact.email)) {
+                const opt = document.createElement("option");
+                opt.value = contact.email;
+                opt.textContent = `${contact.name} (${contact.email})`;
+                select.appendChild(opt);
+              }
+            }
+            if (select.options.length === 0) {
+              const opt = document.createElement("option");
+              opt.textContent = "No hay miembros disponibles";
+              opt.disabled = true;
+              select.appendChild(opt);
+            }
+            modal.style.display = "flex";
+          });
+        });
+      }
+
+      function closeAddMembersModal() {
+        document.getElementById("addMembersModal").style.display = "none";
+        currentAddGroupId = null;
+      }
+
+      document.getElementById("addMembersForm").onsubmit = function(e) {
+        e.preventDefault();
+        const select = document.getElementById("addMembersSelect");
+        const members = Array.from(select.options).filter(opt => opt.selected).map(opt => opt.value);
+        if (!members.length) return;
+        fetch("http://10.48.73.169:5050/add-group-members", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ group_id: currentAddGroupId, new_members: members }),
+        })
+        .then(res => res.json())
+        .then(data => {
+          showAlert(data.message || data.error || "Miembros agregados.");
+          closeAddMembersModal();
+          loadGroups();
+        });
+      };
+
+      // Actualiza el select de contactos para grupos
+      async function updateGroupContactsSelect() {
+        const select = document.getElementById("groupMembersSelect");
+        select.innerHTML = "";
+        try {
+          const res = await fetch("http://10.48.73.169:5050/get-contacts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: userEmail }),
+          });
+          const data = await res.json();
+          if (!data.contacts || data.contacts.length === 0) {
+            const opt = document.createElement("option");
+            opt.textContent = "No tienes contactos";
+            opt.disabled = true;
+            select.appendChild(opt);
+            return;
+          }
+          for (const contact of data.contacts) {
+            if (contact.email === userEmail) continue;
+            const opt = document.createElement("option");
+            opt.value = contact.email;
+            opt.textContent = `${contact.name} (${contact.email})`;
+            select.appendChild(opt);
+          }
+        } catch (err) {
+          const opt = document.createElement("option");
+          opt.textContent = "Error al cargar contactos";
+          opt.disabled = true;
+          select.appendChild(opt);
+        }
+      }
+
+      document.getElementById("createGroupForm").onsubmit = async function (e) {
+        e.preventDefault();
+        const name = document.getElementById("groupNameInput").value.trim();
+        const select = document.getElementById("groupMembersSelect");
+        // Recoge los emails seleccionados
+        const members = Array.from(select.options)
+          .filter((opt) => opt.selected)
+          .map((opt) => opt.value)
+          .filter((x) => !!x && x !== userEmail);
+        if (!name || !members.length) return;
+        // Incluye al creador
+        members.push(userEmail);
+        try {
+          const res = await fetch("http://10.48.73.169:5050/create-group", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, members }),
+          });
+          const data = await res.json();
+          showAlert(data.message || data.error || "Grupo creado");
+          loadGroups();
+          document.getElementById("groupNameInput").value = "";
+          select.selectedIndex = -1;
+        } catch (err) {
+          showAlert("Error al crear grupo.");
+        }
+      };
+
+      // --- Chat de grupo ---
+      let currentGroupId = null;
+      let currentGroupName = null;
+
+      function openGroupChat(groupId, groupName) {
+        currentGroupId = groupId;
+        currentGroupName = groupName;
+        showSection("chatView");
+        document.getElementById("chattingWith").textContent =
+          "Grupo: " + groupName;
+        loadGroupChatHistory(groupId);
+        socket.emit("join_group", { group_id: groupId });
+      }
+
+      async function loadGroupChatHistory(groupId) {
+        const res = await fetch("http://10.48.73.169:5050/get-group-messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ group_id: groupId }),
+        });
+        const data = await res.json();
+        const container = document.getElementById("messages");
+        container.innerHTML = "";
+        if (!data.messages) return;
+        for (const msg of data.messages) {
+          msg.message = await decryptMessageAesGcm(
+            msg.message || msg.text || ""
+          );
+          appendGroupMessage(msg);
+        }
+        container.scrollTop = container.scrollHeight;
+      }
+
+      function appendGroupMessage(msg) {
+        const container = document.getElementById("messages");
+        const el = document.createElement("div");
+        const isOwn = msg.from === userEmail;
+        const displayName = isOwn ? "Tú" : (contactListMap[msg.from] || msg.from);
+
+        el.classList.add("chat-message");
+        el.style.alignSelf = isOwn ? "flex-end" : "flex-start";
+        el.innerHTML = `<strong>${displayName}:</strong> ${msg.message}`;
+        container.appendChild(el);
+        container.scrollTop = container.scrollHeight;
+      }
+
+      async function sendGroupMessage() {
+        const input = document.getElementById("inputMessage");
+        const message = input.value.trim();
+        if (!message || !currentGroupId || !globalAesKey) return;
+        const encrypted = await encryptMessageAesGcm(message);
+        socket.emit("send_group_message", {
+          group_id: currentGroupId,
+          from: userEmail,
+          message: encrypted,
+        });
+        // Agregar el mensaje localmente para mostrarlo de inmediato
+        appendGroupMessage({
+          from: userEmail,
+          message: message,
+          group_id: currentGroupId
+        });
+        input.value = "";
+      }
+
+      // Modifica el evento de input para soportar grupos
+      document
+        .getElementById("inputMessage")
+        .addEventListener("keydown", function (e) {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            if (currentGroupId) sendGroupMessage();
+            else sendMessage();
+          }
+        });
+
+      // Recibir mensaje de grupo en tiempo real
+      socket.on("receive_group_message", async (msg) => {
+        msg.message = await decryptMessageAesGcm(msg.message || msg.text || "");
+        if (msg.group_id === currentGroupId) {
+          appendGroupMessage(msg);
+        }
+      });
+
+      // Cambia showSection para cargar grupos y actualizar contactos de grupo,
+      // y solo cargar contactos una vez al entrar a contactView
+      const origShowSection = function(id) {
+        sections.forEach(
+          (s) => (document.getElementById(s).style.display = "none")
+        );
+        document.getElementById(id).style.display = "block";
+        currentSection = id;
+      };
+
+      showSection = function (id) {
+        origShowSection(id);  // Siempre cambia (aunque ya sea esa sección)
+        if (id === "groupView") {
+          loadGroups();
+          updateGroupContactsSelect();
+        }
+        if (id === "contactView") {
+          loadContacts();
+        }
+        if (id === "requestsView") {
+          loadRequests();
+        }
+      };
+
+      socket.on("receive_message", async (msg) => {
+        msg.message = await decryptMessageAesGcm(msg.message);
+        appendMessage(msg);
+        document.getElementById("messages").scrollTop =
+          document.getElementById("messages").scrollHeight;
+      });
+
+      socket.on("new_notification", (data) => {
+        const sender = data.from?.trim().toLowerCase();
+        const activeChat = localStorage
+          .getItem("chat_with")
+          ?.trim()
+          .toLowerCase();
+
+        if (sender !== activeChat) {
+          showNotificationBadge(sender);
+        }
+      });
+
+      socket.on("notify_unread", (data) => {
+        console.log("[NOTIF] Mensaje no leído desde:", data.from);
+        showNotificationBadge(data.from);
+      });
+
+      document.addEventListener("DOMContentLoaded", function() {
+        showSection("contactView");
+      });
+    </script>
+  </body>
+</html>

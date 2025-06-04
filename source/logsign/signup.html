@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sign Up - ChatApp</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="signup">
+    <div class="signupContainer">
+      <!-- Botón de regreso -->
+      <a href="../index/index.html" class="back-button">← Back to Home</a>
+
+      <h2>Sign up</h2>
+      <form>
+        <label for="name">Username</label>
+        <input type="text" id="name" name="name" required />
+
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required />
+
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required />
+
+        <button type="submit">Create Account</button>
+      </form>
+    </div>
+
+    <script>
+      // Verificar que window.crypto.subtle está disponible antes de intentar generar claves
+      if (!window.crypto || !window.crypto.subtle) {
+        alert(
+          "Tu navegador no soporta la generación de claves criptográficas necesarias. " +
+          "Por favor, usa un navegador moderno (Chrome, Firefox, Edge) y asegúrate de acceder vía http(s)."
+        );
+        throw new Error("Web Crypto API no disponible");
+      }
+      const form = document.querySelector("form");
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        try {
+          // Siempre genera un nuevo par de claves
+          const { publicKeyPEM, exportedPrivateKey } = await generateNewKeyPair();
+
+          const data = {
+            name: document.getElementById("name").value.trim(),
+            email: document.getElementById("email").value.trim(),
+            password: document.getElementById("password").value,
+            public_key: publicKeyPEM,
+          };
+
+          const response = await fetch("http://127.0.0.1:5050/signup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+
+          const result = await response.json();
+          if (response.ok) {
+            // Guarda solo si registro exitoso
+            localStorage.setItem("privateKeyJwk", JSON.stringify(exportedPrivateKey));
+            localStorage.setItem("publicKeyPEM", publicKeyPEM);
+            showAlert("Cuenta creada con éxito. Ahora puedes iniciar sesión.");
+            document
+              .getElementById("customAlert")
+              .querySelector("button").onclick = function () {
+                closeAlert();
+                window.location.href = "../index/index.html";
+              };
+          } else {
+            // Si falla, elimina cualquier clave generada de este intento
+            localStorage.removeItem("privateKeyJwk");
+            localStorage.removeItem("publicKeyPEM");
+            showAlert(result.error || "Ocurrió un error desconocido");
+          }
+        } catch (err) {
+          localStorage.removeItem("privateKeyJwk");
+          localStorage.removeItem("publicKeyPEM");
+          showAlert("Error al generar tu clave de seguridad: " + (err?.message || err));
+        }
+      });
+
+      // Convierte ArrayBuffer a PEM
+      function spkiToPEM(spkiBuffer) {
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(spkiBuffer)));
+        const pem = [
+          "-----BEGIN PUBLIC KEY-----",
+          ...base64.match(/.{1,64}/g),
+          "-----END PUBLIC KEY-----"
+        ].join("\n");
+        return pem;
+      }
+
+      // Siempre genera nuevo par de claves (no reutiliza)
+      async function generateNewKeyPair() {
+        const { publicKey, privateKey } = await window.crypto.subtle.generateKey(
+          {
+            name: "RSA-OAEP",
+            modulusLength: 2048,
+            publicExponent: new Uint8Array([1, 0, 1]),
+            hash: "SHA-256"
+          },
+          true,
+          ["encrypt", "decrypt"]
+        );
+        const exportedPrivateKey = await window.crypto.subtle.exportKey("jwk", privateKey);
+        const exportedPublicKey = await window.crypto.subtle.exportKey("spki", publicKey);
+        const publicKeyPEM = spkiToPEM(exportedPublicKey);
+        return { publicKeyPEM, exportedPrivateKey };
+      }
+
+      function showAlert(message) {
+        document.getElementById("alertText").textContent = message;
+        document.getElementById("customAlert").style.display = "flex";
+      }
+
+      function closeAlert() {
+        document.getElementById("customAlert").style.display = "none";
+      }
+    </script>
+
+    <div id="customAlert" class="modal" style="display: none">
+      <div class="modal-content">
+        <p id="alertText">Texto del mensaje</p>
+        <button onclick="closeAlert()">Aceptar</button>
+      </div>
+    </div>
+  </body>
+</html>
