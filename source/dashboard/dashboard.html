@@ -1230,7 +1230,7 @@
             socket.on("join_group_error", onError);
           });
 
-          await loadGroupChatHistory(groupId);
+          // await loadGroupChatHistory(groupId);
 
           // Listener SIEMPRE después del await y solo uno por vez
           socket.on("receive_group_message", async (msg) => {
