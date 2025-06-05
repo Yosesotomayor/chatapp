@@ -45,26 +45,44 @@
         </div>
 
         <!-- Vista: Grupos -->
-        <div id="groupView" class="section group-section" style="display: none;">
+        <div id="groupView" class="section group-section" style="display: none">
           <h2>👥 Grupos</h2>
-          <form id="createGroupForm" style="margin-bottom: 1em;">
-            <input type="text" id="groupNameInput" placeholder="Nombre del grupo" required />
-            <select id="groupMembersSelect" multiple size="4" style="min-width: 180px; margin: 0 8px;" required></select>
+          <form id="createGroupForm" style="margin-bottom: 1em">
+            <input
+              type="text"
+              id="groupNameInput"
+              placeholder="Nombre del grupo"
+              required
+            />
+            <select
+              id="groupMembersSelect"
+              multiple
+              size="4"
+              style="min-width: 180px; margin: 0 8px"
+              required
+            ></select>
             <button type="submit">Crear grupo</button>
           </form>
-          <ul id="groupList" style="margin-bottom: 1em;">
+          <ul id="groupList" style="margin-bottom: 1em">
             <li>Cargando grupos...</li>
           </ul>
 
           <!-- Modal para añadir miembros a grupo -->
-          <div id="addMembersModal" class="modal" style="display: none;">
+          <div id="addMembersModal" class="modal" style="display: none">
             <div class="modal-content">
               <h3>Añadir miembros al grupo</h3>
               <form id="addMembersForm">
-                <select id="addMembersSelect" multiple size="5" style="min-width: 180px;"></select>
-                <div style="margin-top: 1em;">
+                <select
+                  id="addMembersSelect"
+                  multiple
+                  size="5"
+                  style="min-width: 180px"
+                ></select>
+                <div style="margin-top: 1em">
                   <button type="submit">Agregar</button>
-                  <button type="button" onclick="closeAddMembersModal()">Cancelar</button>
+                  <button type="button" onclick="closeAddMembersModal()">
+                    Cancelar
+                  </button>
                 </div>
               </form>
             </div>
@@ -297,11 +315,14 @@
         const groupList = document.getElementById("groupList");
         groupList.innerHTML = "<li>Cargando grupos...</li>";
         try {
-          const res = await fetch("https://chat-app-backend-u5na.onrender.com/get-groups", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: userEmail }),
-          });
+          const res = await fetch(
+            "https://chat-app-backend-u5na.onrender.com/get-groups",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email: userEmail }),
+            }
+          );
           const data = await res.json();
           if (!data.groups || data.groups.length === 0) {
             groupList.innerHTML = "<li>No tienes grupos aún.</li>";
@@ -312,10 +333,14 @@
             const li = document.createElement("li");
             li.innerHTML = `
               <div class="group-box" style="display: flex; align-items: center;">
-                <span style="flex: 1; cursor:pointer" onclick="openGroupChat('${group._id}', '${group.name.replace(/'/g, "\\'")}')">
+                <span style="flex: 1; cursor:pointer" onclick="openGroupChat('${
+                  group._id
+                }', '${group.name.replace(/'/g, "\\'")}')">
                   ${group.name} (${group.members.length} miembros)
                 </span>
-                <button style="margin-left: 8px;" onclick="openAddMembersModal('${group._id}'); event.stopPropagation();">➕ Añadir miembros</button>
+                <button style="margin-left: 8px;" onclick="openAddMembersModal('${
+                  group._id
+                }'); event.stopPropagation();">➕ Añadir miembros</button>
               </div>
             `;
             groupList.appendChild(li);
@@ -359,11 +384,14 @@
         select.innerHTML = "";
         // Obtener miembros actuales del grupo
         try {
-          const groupRes = await fetch("https://chat-app-backend-u5na.onrender.com/get-group", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ group_id: groupId }),
-          });
+          const groupRes = await fetch(
+            "https://chat-app-backend-u5na.onrender.com/get-group",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ group_id: groupId }),
+            }
+          );
           const groupData = await groupRes.json();
           const members = groupData.group?.members || [];
           // Obtener contactos para mostrar solo los que no están en el grupo
@@ -387,7 +415,8 @@
             }
           }
           if (count === 0) {
-            select.innerHTML = "<option disabled>No hay contactos para agregar</option>";
+            select.innerHTML =
+              "<option disabled>No hay contactos para agregar</option>";
           }
         } catch (err) {
           select.innerHTML = "<option>Error al cargar contactos</option>";
@@ -407,17 +436,25 @@
         const modal = document.getElementById("addMembersModal");
         const groupId = modal.getAttribute("data-groupid");
         const select = document.getElementById("addMembersSelect");
-        const membersToAdd = Array.from(select.selectedOptions).map(opt => opt.value);
+        const membersToAdd = Array.from(select.selectedOptions).map(
+          (opt) => opt.value
+        );
         if (!groupId || membersToAdd.length === 0) {
           showAlert("Selecciona al menos un contacto para agregar.");
           return;
         }
         try {
-          const res = await fetch("https://chat-app-backend-u5na.onrender.com/add-group-members", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ group_id: groupId, members: membersToAdd }),
-          });
+          const res = await fetch(
+            "https://chat-app-backend-u5na.onrender.com/add-group-members",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                group_id: groupId,
+                new_members: membersToAdd,
+              }),
+            }
+          );
           const data = await res.json();
           if (res.ok) {
             showAlert("Miembros agregados.");
@@ -436,7 +473,9 @@
         e.preventDefault();
         const name = document.getElementById("groupNameInput").value.trim();
         const select = document.getElementById("groupMembersSelect");
-        const members = Array.from(select.selectedOptions).map(opt => opt.value);
+        const members = Array.from(select.selectedOptions).map(
+          (opt) => opt.value
+        );
         if (!name || members.length === 0) {
           showAlert("Debes ingresar nombre y seleccionar miembros.");
           return;
@@ -444,11 +483,14 @@
         // Siempre incluir al creador
         if (!members.includes(userEmail)) members.push(userEmail);
         try {
-          const res = await fetch("https://chat-app-backend-u5na.onrender.com/create-group", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, members }),
-          });
+          const res = await fetch(
+            "https://chat-app-backend-u5na.onrender.com/create-group",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name, members }),
+            }
+          );
           const data = await res.json();
           if (res.ok) {
             showAlert("Grupo creado correctamente.");
@@ -475,16 +517,20 @@
         if (messages) messages.innerHTML = "";
         document.getElementById("inputMessage").value = "";
         showSection("chatView");
-        document.getElementById("chattingWith").textContent = "Grupo: " + groupName;
+        document.getElementById("chattingWith").textContent =
+          "Grupo: " + groupName;
         // Unirse a la sala de grupo
-        socket.emit("join_group", { groupId });
+        socket.emit("join_group", { group_id: groupId });
         // Obtener historial de mensajes
         try {
-          const res = await fetch("https://chat-app-backend-u5na.onrender.com/get-group-messages", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ group_id: groupId }),
-          });
+          const res = await fetch(
+            "https://chat-app-backend-u5na.onrender.com/get-group-messages",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ group_id: groupId }),
+            }
+          );
           const data = await res.json();
           messages.innerHTML = "";
           for (const msg of data.messages || []) {
@@ -499,7 +545,7 @@
         socket.off("receive_group_message");
         // Listener de mensajes grupales SOLO para el grupo abierto
         socket.on("receive_group_message", async (msg) => {
-          if (msg.groupId === currentGroupId) {
+          if (msg.group_id === currentGroupId) {
             msg.message = await decryptMessageAesGcm(msg.message);
             appendGroupMessage(msg);
             document.getElementById("messages").scrollTop =
@@ -515,7 +561,7 @@
         if (!message || !globalAesKey || !currentGroupId) return;
         const encrypted = await encryptMessageAesGcm(message);
         socket.emit("send_group_message", {
-          groupId: currentGroupId,
+          group_id: currentGroupId,
           from: userEmail,
           message: encrypted,
         });
@@ -527,7 +573,7 @@
         const container = document.getElementById("messages");
         const el = document.createElement("div");
         const isOwn = msg.from === userEmail;
-        let displayName = isOwn ? "Tú" : (msg.from_name || msg.from || "");
+        let displayName = isOwn ? "Tú" : msg.from_name || msg.from || "";
         if (!displayName && msg.from) displayName = msg.from;
         el.classList.add("chat-message");
         el.style.alignSelf = isOwn ? "flex-end" : "flex-start";
@@ -976,11 +1022,14 @@
         });
 
         // --- Cargar historial de chat ---
-        const res = await fetch("https://chat-app-backend-u5na.onrender.com/get-messages", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user1: userEmail, user2: email }),
-        });
+        const res = await fetch(
+          "https://chat-app-backend-u5na.onrender.com/get-messages",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user1: userEmail, user2: email }),
+          }
+        );
         const data = await res.json();
         const messagesContainer = document.getElementById("messages");
         messagesContainer.innerHTML = "";
@@ -1280,16 +1329,17 @@
 
       // Hook para actualizar el envío de mensajes cuando cambia de chat privado/grupal
       const origOpenGroupChat = openGroupChat;
-      openGroupChat = async function(groupId, groupName) {
+      openGroupChat = async function (groupId, groupName) {
         await origOpenGroupChat(groupId, groupName);
         setSendMessageHandler();
       };
       const origStartChat = startChat;
-      startChat = async function(email) {
+      startChat = async function (email) {
         await origStartChat(email);
         currentGroupId = null;
         currentGroupName = null;
-        document.getElementById("chattingWith").textContent = await fetchContactName(email);
+        document.getElementById("chattingWith").textContent =
+          await fetchContactName(email);
         setSendMessageHandler();
       };
 
