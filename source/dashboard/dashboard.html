@@ -507,7 +507,7 @@
 
       // Abrir chat grupal
       async function openGroupChat(groupId, groupName) {
-        limpiarListenersMensajes();
+        console.log("[DEBUG] openGroupChat:", groupId, groupName);
         currentGroupId = groupId;
         currentGroupName = groupName;
         chatWith = null;
