@@ -1230,31 +1230,12 @@
             socket.on("join_group_error", onError);
           });
 
-          // await loadGroupChatHistory(groupId);
-
           // Listener SIEMPRE después del await y solo uno por vez
           socket.on("receive_group_message", async (msg) => {
             let texto = msg.message || msg.text || "";
             texto = await decryptMessageAesGcm(texto);
-            console.log(
-              "[RECIBIDO MENSAJE GRUPO]",
-              msg,
-              "CurrentGroupId:",
-              currentGroupId
-            );
             if (msg.group_id === currentGroupId) {
               appendGroupMessage({ ...msg, message: texto });
-            } else {
-              // También muestra el mensaje aunque sea de otro grupo, para debug
-              console.warn(
-                "Mensaje recibido para otro grupo:",
-                msg.group_id,
-                "(actual:",
-                currentGroupId,
-                ")"
-              );
-              // Puedes comentar la siguiente línea para evitar mostrarlo:
-              // appendGroupMessage({ ...msg, message: texto });
             }
           });
         } catch (e) {
@@ -1315,14 +1296,12 @@
         const input = document.getElementById("inputMessage");
         const message = input.value.trim();
         if (!message || !currentGroupId || !globalAesKey) return;
-        console.log("[ENVIANDO MENSAJE GRUPO]", currentGroupId, message); // Log para enviar
         const encrypted = await encryptMessageAesGcm(message);
         socket.emit("send_group_message", {
           group_id: currentGroupId,
           from: userEmail,
           message: encrypted,
         });
-        // El mensaje no se debe renderizar localmente aquí; solo el backend debe propagarlo.
         input.value = "";
       }
 
