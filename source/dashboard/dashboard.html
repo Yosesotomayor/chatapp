@@ -367,9 +367,14 @@
           for (const group of data.groups) {
             const li = document.createElement("li");
             li.innerHTML = `
-              <div class="group-box" data-groupid="${group._id}" onclick="openGroupChat('${group._id}', '${group.name.replace(/'/g, "\\'")}')" style="cursor:pointer;">
-                ${group.name} (${group.members.length} miembros)
-              </div>
+              <div class="group-box" data-groupid="${
+                group.id
+              }" onclick="openGroupChat('${group.id}', '${group.name.replace(
+              /'/g,
+              "\\'"
+            )}')" style="cursor:pointer;">
+  ${group.name} (${group.members.length} miembros)
+</div>
             `;
             groupList.appendChild(li);
           }
@@ -557,14 +562,19 @@
           );
           const groupData = await groupRes.json();
           // Normaliza ambos correos para comparar sin errores de mayúsculas/espacios
-          currentGroupAdmin = (groupData.group?.admin || "").trim().toLowerCase();
+          currentGroupAdmin = (groupData.group?.admin || "")
+            .trim()
+            .toLowerCase();
           const userEmailNormalized = (userEmail || "").trim().toLowerCase();
-          console.log("[DEBUG admin] group admin:", currentGroupAdmin, "user:", userEmailNormalized);
-          if (
-            currentGroupAdmin &&
-            currentGroupAdmin === userEmailNormalized
-          ) {
-            document.getElementById("groupOptions").style.display = "inline-block";
+          console.log(
+            "[DEBUG admin] group admin:",
+            currentGroupAdmin,
+            "user:",
+            userEmailNormalized
+          );
+          if (currentGroupAdmin && currentGroupAdmin === userEmailNormalized) {
+            document.getElementById("groupOptions").style.display =
+              "inline-block";
           } else {
             document.getElementById("groupOptions").style.display = "none";
           }
