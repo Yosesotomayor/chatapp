@@ -744,6 +744,21 @@
           user2: email,
         });
 
+        // --- Cargar historial de chat ---
+        const res = await fetch("https://chat-app-backend-u5na.onrender.com/get-messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user1: userEmail, user2: email }),
+        });
+        const data = await res.json();
+        const messagesContainer = document.getElementById("messages");
+        messagesContainer.innerHTML = "";
+        for (const msg of data.messages || []) {
+          msg.message = await decryptMessageAesGcm(msg.message);
+          appendMessage(msg);
+        }
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
         // Instala el listener para mensajes directos cada vez que abres un chat
         socket.on("receive_message", async (msg) => {
           msg.message = await decryptMessageAesGcm(msg.message);
