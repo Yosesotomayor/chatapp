@@ -737,18 +737,10 @@
           loadContacts(); // Recargar contactos automáticamente
         }
       });
-      function limpiarListenersMensajes() {
-        socket.off("receive_message");
-        socket.off("chat_history");
-        socket.off("receive_group_message");
-        socket.off("group_chat_history");
-      }
-
       async function startChat(email) {
         // --- Evitar solapamiento de chats directos y de grupo ---
         // Al abrir un chat directo, limpia el contexto de grupo.
         // Esto previene errores al alternar entre chats directos y grupales.
-        limpiarListenersMensajes();
         currentGroupId = null;
         currentGroupName = null;
         // Limpia también el grupo de localStorage
@@ -1193,7 +1185,6 @@
 
       async function openGroupChat(groupId, groupName) {
         // Limpiar contexto directo y listeners viejos
-        limpiarListenersMensajes();
         chatWith = null;
         localStorage.removeItem("chat_with");
 
@@ -1211,6 +1202,10 @@
         showSection("chatView");
         document.getElementById("chattingWith").textContent =
           "Grupo: " + groupName;
+
+        // Quitar TODOS los listeners anteriores de receive_group_message y group_chat_history
+        socket.off("receive_group_message");
+        socket.off("group_chat_history");
 
         // Unirse al grupo y pedir historial
         socket.emit("join_group", { group_id: groupId });
