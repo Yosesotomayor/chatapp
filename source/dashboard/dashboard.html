@@ -759,7 +759,7 @@
         }
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-        // Instala el listener para mensajes directos cada vez que abres un chat
+        // Instala el listener para mensajes directos cada vez que abres un chat si
         socket.on("receive_message", async (msg) => {
           msg.message = await decryptMessageAesGcm(msg.message);
           appendMessage(msg);
