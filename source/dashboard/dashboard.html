@@ -362,7 +362,7 @@
           const groupRes = await fetch("https://chat-app-backend-u5na.onrender.com/get-group", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ groupId }),
+            body: JSON.stringify({ group_id: groupId }),
           });
           const groupData = await groupRes.json();
           const members = groupData.group?.members || [];
@@ -416,7 +416,7 @@
           const res = await fetch("https://chat-app-backend-u5na.onrender.com/add-group-members", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ groupId, members: membersToAdd }),
+            body: JSON.stringify({ group_id: groupId, members: membersToAdd }),
           });
           const data = await res.json();
           if (res.ok) {
