@@ -965,6 +965,17 @@
         input.value = "";
       }
 
+      socket.on("group_chat_history", async (messages) => {
+        const container = document.getElementById("messages");
+        container.innerHTML = "";
+        for (const msg of messages) {
+          msg.message = await decryptMessageAesGcm(
+            msg.message || msg.text || ""
+          );
+          appendGroupMessage(msg);
+        }
+        container.scrollTop = container.scrollHeight;
+      });
       socket.on("chat_history", async (msgs) => {
         const container = document.getElementById("messages");
         container.innerHTML = "";
@@ -1225,12 +1236,23 @@
           socket.on("receive_group_message", async (msg) => {
             let texto = msg.message || msg.text || "";
             texto = await decryptMessageAesGcm(texto);
-            console.log("[RECIBIDO MENSAJE GRUPO]", msg, "CurrentGroupId:", currentGroupId);
+            console.log(
+              "[RECIBIDO MENSAJE GRUPO]",
+              msg,
+              "CurrentGroupId:",
+              currentGroupId
+            );
             if (msg.group_id === currentGroupId) {
               appendGroupMessage({ ...msg, message: texto });
             } else {
               // También muestra el mensaje aunque sea de otro grupo, para debug
-              console.warn("Mensaje recibido para otro grupo:", msg.group_id, "(actual:", currentGroupId, ")");
+              console.warn(
+                "Mensaje recibido para otro grupo:",
+                msg.group_id,
+                "(actual:",
+                currentGroupId,
+                ")"
+              );
               // Puedes comentar la siguiente línea para evitar mostrarlo:
               // appendGroupMessage({ ...msg, message: texto });
             }
@@ -1272,11 +1294,23 @@
 
         el.classList.add("chat-message");
         el.style.alignSelf = isOwn ? "flex-end" : "flex-start";
-        el.innerHTML = `<strong>${displayName}:</strong> ${msg.message || msg.text || "[Vacío]"}`;
+        el.innerHTML = `<strong>${displayName}:</strong> ${
+          msg.message || msg.text || "[Vacío]"
+        }`;
         container.appendChild(el);
         container.scrollTop = container.scrollHeight;
       }
-
+      socket.on("group_chat_history", async (messages) => {
+        const container = document.getElementById("messages");
+        container.innerHTML = "";
+        for (const msg of messages) {
+          msg.message = await decryptMessageAesGcm(
+            msg.message || msg.text || ""
+          );
+          appendGroupMessage(msg);
+        }
+        container.scrollTop = container.scrollHeight;
+      });
       async function sendGroupMessage() {
         const input = document.getElementById("inputMessage");
         const message = input.value.trim();
@@ -1334,7 +1368,9 @@
       // Manejo de error al unirse a un grupo: mostrar alerta y regresar a contactos
       socket.on("join_group_error", (data) => {
         console.error("[ERROR] join_group_error:", data);
-        showAlert("No se pudo unir al grupo: " + (data.message || "Error desconocido."));
+        showAlert(
+          "No se pudo unir al grupo: " + (data.message || "Error desconocido.")
+        );
         showSection("contactView");
       });
 
