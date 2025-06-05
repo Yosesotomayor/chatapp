@@ -1302,13 +1302,19 @@
 
       // Listener para mensajes de grupo
       socket.on("receive_group_message", async (msg) => {
-        console.log("[RECIBIDO MENSAJE GRUPO]", msg); // Log para recibir
+        console.log("[RECIBIDO MENSAJE GRUPO]", msg);
+        console.log("CurrentGroupId:", currentGroupId, "MsgGroupId:", msg.group_id);
         let texto = msg.message || msg.text || "";
         texto = await decryptMessageAesGcm(texto);
         if (msg.group_id === currentGroupId) {
           appendGroupMessage({
             ...msg,
             message: texto
+          });
+        } else {
+          console.warn("Mensaje recibido para grupo diferente o sin grupo activo", {
+            currentGroupId,
+            msgGroupId: msg.group_id
           });
         }
       });
