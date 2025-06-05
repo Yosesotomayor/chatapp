@@ -559,40 +559,6 @@
           modal.style.display = "none";
         };
       }
-      function respondRequest(requesterEmail, accepted) {
-        fetch("https://chat-app-backend-u5na.onrender.com/respond-request", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_email: userEmail,
-            requester_email: requesterEmail,
-            accepted: accepted,
-          }),
-        })
-          .then((res) => res.json())
-          .then(() => {
-            showAlert(
-              accepted
-                ? "Solicitud aceptada correctamente"
-                : "Solicitud rechazada"
-            );
-            loadRequests();
-            loadContacts(); // actualizar lista
-          });
-      }
-
-      function cancelRequest(toEmail) {
-        fetch("https://chat-app-backend-u5na.onrender.com/cancel-request", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ from_email: userEmail, to_email: toEmail }),
-        })
-          .then((res) => res.json())
-          .then(() => {
-            showAlert("Solicitud cancelada");
-            loadRequests();
-          });
-      }
       document.getElementById("requestForm").onsubmit = async function (e) {
         e.preventDefault();
         const toEmail = document
@@ -738,6 +704,7 @@
         }
       });
       async function startChat(email) {
+        limpiarListenersMensajes();
         // --- Evitar solapamiento de chats directos y de grupo ---
         // Al abrir un chat directo, limpia el contexto de grupo.
         // Esto previene errores al alternar entre chats directos y grupales.
@@ -1184,6 +1151,7 @@
       }
 
       async function openGroupChat(groupId, groupName) {
+        limpiarListenersMensajes();
         // Limpiar contexto directo y listeners viejos
         chatWith = null;
         localStorage.removeItem("chat_with");
