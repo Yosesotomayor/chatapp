@@ -1034,3 +1034,20 @@ button.delete-chat:hover {
   color: #fff;
   margin-left: 6px;
 }
+
+/* ---- Apariencia tipo tarjeta para grupos igual a contactos ---- */
+.group-box {
+  padding: 10px;
+  border-radius: 10px;
+  background-color: #2c2c2c;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.group-box:hover {
+  background-color: #3a3a3a;
+}
