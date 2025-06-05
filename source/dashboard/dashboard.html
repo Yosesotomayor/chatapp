@@ -1223,14 +1223,16 @@
 
           // Listener SIEMPRE después del await y solo uno por vez
           socket.on("receive_group_message", async (msg) => {
-            // Usar siempre msg.message o msg.text
             let texto = msg.message || msg.text || "";
             texto = await decryptMessageAesGcm(texto);
+            console.log("[RECIBIDO MENSAJE GRUPO]", msg, "CurrentGroupId:", currentGroupId);
             if (msg.group_id === currentGroupId) {
-              appendGroupMessage({
-                ...msg,
-                message: texto
-              });
+              appendGroupMessage({ ...msg, message: texto });
+            } else {
+              // También muestra el mensaje aunque sea de otro grupo, para debug
+              console.warn("Mensaje recibido para otro grupo:", msg.group_id, "(actual:", currentGroupId, ")");
+              // Puedes comentar la siguiente línea para evitar mostrarlo:
+              // appendGroupMessage({ ...msg, message: texto });
             }
           });
         } catch (e) {
@@ -1262,6 +1264,7 @@
       }
 
       function appendGroupMessage(msg) {
+        console.log("[APPEND GROUP MSG]", msg);
         const container = document.getElementById("messages");
         const el = document.createElement("div");
         const isOwn = msg.from === userEmail;
@@ -1286,7 +1289,8 @@
           message: encrypted,
         });
         input.value = "";
-        // No agregues el mensaje aquí, deja que el backend lo propague a todos.
+        // Renderiza localmente el mensaje enviado
+        appendGroupMessage({ from: userEmail, message, group_id: currentGroupId });
       }
 
       // Modifica el evento de input para soportar grupos
@@ -1301,23 +1305,7 @@
         });
 
       // Listener para mensajes de grupo
-      socket.on("receive_group_message", async (msg) => {
-        console.log("[RECIBIDO MENSAJE GRUPO]", msg);
-        console.log("CurrentGroupId:", currentGroupId, "MsgGroupId:", msg.group_id);
-        let texto = msg.message || msg.text || "";
-        texto = await decryptMessageAesGcm(texto);
-        if (msg.group_id === currentGroupId) {
-          appendGroupMessage({
-            ...msg,
-            message: texto
-          });
-        } else {
-          console.warn("Mensaje recibido para grupo diferente o sin grupo activo", {
-            currentGroupId,
-            msgGroupId: msg.group_id
-          });
-        }
-      });
+      // (Ahora el listener se instala en openGroupChat, no aquí, para evitar duplicados)
 
       // Cambia showSection para cargar grupos y actualizar contactos de grupo,
       // y solo cargar contactos una vez al entrar a contactView
