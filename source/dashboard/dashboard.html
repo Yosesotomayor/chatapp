@@ -578,7 +578,7 @@
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ name, members, creator: userEmail }),
+              body: JSON.stringify({ name, members, admin: userEmail }),
             }
           );
           const data = await res.json();
