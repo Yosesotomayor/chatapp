@@ -158,14 +158,24 @@
 
         <!-- Vista: Chat -->
         <div id="chatView" style="display: none">
-          <div class="chat-header">
-            <h2>💬 ChatApp</h2>
-            <p>🔐 Conectado como: <span id="connectedUser">...</span></p>
-            <p>📨 Chateando con: <span id="chattingWith">...</span></p>
+          <div
+            class="chat-header"
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            "
+          >
+            <div style="display: flex; flex-direction: column">
+              <h2>💬 ChatApp</h2>
+              <p>🔐 Conectado como: <span id="connectedUser">...</span></p>
+              <p>📨 Chateando con: <span id="chattingWith">...</span></p>
+            </div>
             <span
               id="groupOptions"
-              style="display: inline-block; margin-left: 10px; cursor: pointer"
+              style="cursor: pointer; font-size: 1.5rem"
               onclick="openGroupOptionsMenu()"
+              title="Opciones del grupo"
               >⚙️</span
             >
           </div>
