@@ -162,6 +162,12 @@
             <h2>💬 ChatApp</h2>
             <p>🔐 Conectado como: <span id="connectedUser">...</span></p>
             <p>📨 Chateando con: <span id="chattingWith">...</span></p>
+            <span
+              id="groupOptions"
+              style="display: none; margin-left: 10px; cursor: pointer"
+              onclick="openGroupOptionsMenu()"
+              >⚙️</span
+            >
           </div>
           <div id="messages" class="chat-box"></div>
           <div class="chat-input">
@@ -222,6 +228,35 @@
           <button id="confirmYes">Sí</button>
           <button id="confirmNo">Cancelar</button>
         </div>
+      </div>
+    </div>
+
+    <div id="manageMembersModal" class="modal" style="display: none">
+      <div class="modal-content">
+        <h3>Administrar grupo</h3>
+        <div style="margin-bottom: 1em">
+          <h4>Añadir miembros</h4>
+          <form id="addMembersForm">
+            <select
+              id="addMembersSelect"
+              multiple
+              size="5"
+              style="min-width: 180px"
+            ></select>
+            <button type="submit">Agregar</button>
+          </form>
+        </div>
+        <div style="margin-bottom: 1em">
+          <h4>Miembros actuales</h4>
+          <ul id="groupMembersList"></ul>
+        </div>
+        <div style="margin-bottom: 1em">
+          <button onclick="clearGroupChat()">🧹 Limpiar chat</button>
+          <button onclick="deleteGroup()">🗑️ Eliminar grupo</button>
+        </div>
+        <button type="button" onclick="closeManageMembersModal()">
+          Cerrar
+        </button>
       </div>
     </div>
 
@@ -338,9 +373,6 @@
                 }', '${group.name.replace(/'/g, "\\'")}')">
                   ${group.name} (${group.members.length} miembros)
                 </span>
-                <button style="margin-left: 8px;" onclick="openAddMembersModal('${
-                  group._id
-                }'); event.stopPropagation();">➕ Añadir miembros</button>
               </div>
             `;
             groupList.appendChild(li);
@@ -505,6 +537,8 @@
         }
       };
 
+      let currentGroupAdmin = null;
+
       // Abrir chat grupal
       async function openGroupChat(groupId, groupName) {
         console.log("[DEBUG] openGroupChat:", groupId, groupName);
@@ -513,6 +547,28 @@
         chatWith = null;
         localStorage.removeItem("chat_with");
         // Limpiar mensajes e input
+
+        try {
+          const groupRes = await fetch(
+            "https://chat-app-backend-u5na.onrender.com/get-group",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ group_id: groupId }),
+            }
+          );
+          const groupData = await groupRes.json();
+          currentGroupAdmin = groupData.group?.admin;
+          if (currentGroupAdmin && currentGroupAdmin === userEmail) {
+            document.getElementById("groupOptions").style.display =
+              "inline-block";
+          } else {
+            document.getElementById("groupOptions").style.display = "none";
+          }
+        } catch (e) {
+          document.getElementById("groupOptions").style.display = "none";
+        }
+
         const messages = document.getElementById("messages");
         if (messages) messages.innerHTML = "";
         document.getElementById("inputMessage").value = "";
@@ -554,6 +610,143 @@
         });
       }
 
+      function openGroupOptionsMenu() {
+        loadManageMembersModal();
+        document.getElementById("manageMembersModal").style.display = "flex";
+      }
+      function closeManageMembersModal() {
+        document.getElementById("manageMembersModal").style.display = "none";
+      }
+
+      async function loadManageMembersModal() {
+        const addSelect = document.getElementById("addMembersSelect");
+        const membersList = document.getElementById("groupMembersList");
+        addSelect.innerHTML = "";
+        membersList.innerHTML = "";
+
+        // Trae contactos
+        const contactsRes = await fetch(
+          "https://chat-app-backend-u5na.onrender.com/get-contacts",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: userEmail }),
+          }
+        );
+        const contactsData = await contactsRes.json();
+
+        // Trae info del grupo
+        const groupRes = await fetch(
+          "https://chat-app-backend-u5na.onrender.com/get-group",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ group_id: currentGroupId }),
+          }
+        );
+        const groupData = await groupRes.json();
+        const members = groupData.group?.members || [];
+
+        // Añadir miembros (solo los que no están en el grupo)
+        for (const contact of contactsData.contacts) {
+          if (!members.includes(contact.email)) {
+            const opt = document.createElement("option");
+            opt.value = contact.email;
+            opt.textContent = contact.name; // Solo el nombre
+            addSelect.appendChild(opt);
+          }
+        }
+
+        // Lista de miembros actuales
+        for (const email of members) {
+          const contact = contactsData.contacts.find((c) => c.email === email);
+          const name = contact ? contact.name : email;
+          const li = document.createElement("li");
+          li.textContent = name;
+          if (email !== currentGroupAdmin && email !== userEmail) {
+            const btn = document.createElement("button");
+            btn.textContent = "Eliminar";
+            btn.onclick = () => removeMemberFromGroup(email);
+            li.appendChild(btn);
+          }
+          membersList.appendChild(li);
+        }
+      }
+
+      // Añadir miembros al grupo
+      document.getElementById("addMembersForm").onsubmit = async function (e) {
+        e.preventDefault();
+        const select = document.getElementById("addMembersSelect");
+        const membersToAdd = Array.from(select.selectedOptions).map(
+          (opt) => opt.value
+        );
+        if (membersToAdd.length === 0) return;
+        await fetch(
+          "https://chat-app-backend-u5na.onrender.com/add-group-members",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              group_id: currentGroupId,
+              new_members: membersToAdd,
+            }),
+          }
+        );
+        loadManageMembersModal();
+        loadGroups();
+      };
+
+      // Eliminar miembro del grupo
+      async function removeMemberFromGroup(email) {
+        await fetch(
+          "https://chat-app-backend-u5na.onrender.com/remove-group-member",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              group_id: currentGroupId,
+              member_email: email,
+            }),
+          }
+        );
+        loadManageMembersModal();
+        loadGroups();
+      }
+
+      // Limpiar chat de grupo
+      async function clearGroupChat() {
+        if (!confirm("¿Seguro que quieres limpiar el chat de este grupo?"))
+          return;
+        await fetch(
+          "https://chat-app-backend-u5na.onrender.com/clear-group-chat",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ group_id: currentGroupId }),
+          }
+        );
+        closeManageMembersModal();
+        openGroupChat(currentGroupId, currentGroupName);
+      }
+
+      // Eliminar grupo
+      async function deleteGroup() {
+        if (
+          !confirm(
+            "¿Seguro que deseas eliminar este grupo? No se podrá recuperar."
+          )
+        )
+          return;
+        await fetch("https://chat-app-backend-u5na.onrender.com/delete-group", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ group_id: currentGroupId }),
+        });
+        closeManageMembersModal();
+        showSection("groupView");
+        loadGroups();
+      }
+      
       // Enviar mensaje grupal
       async function sendGroupMessage() {
         const input = document.getElementById("inputMessage");
