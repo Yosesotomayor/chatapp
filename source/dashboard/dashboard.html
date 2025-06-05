@@ -5,45 +5,6 @@
     <title>Dashboard - ChatApp</title>
     <link rel="stylesheet" href="style.css" />
     <style>
-      /* Estilos para el botón de opciones del grupo */
-      #groupOptions {
-        position: relative;
-        cursor: pointer;
-        font-size: 1.5rem;
-        padding: 0.3rem;
-      }
-
-      /* Menú desplegable para opciones */
-      #groupOptionsMenu {
-        display: none;
-        position: absolute;
-        top: 2.2rem;
-        right: 0;
-        background-color: white;
-        border: 1px solid #ccc;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        border-radius: 4px;
-        z-index: 1000;
-        min-width: 160px;
-      }
-
-      #groupOptionsMenu.visible {
-        display: block;
-      }
-
-      #groupOptionsMenu button {
-        background: none;
-        border: none;
-        width: 100%;
-        text-align: left;
-        padding: 8px 12px;
-        font-size: 1rem;
-        cursor: pointer;
-      }
-
-      #groupOptionsMenu button:hover {
-        background-color: #f0f0f0;
-      }
     </style>
     <script>
       if (!localStorage.getItem("user_email")) {
@@ -66,9 +27,6 @@
         <button class="menu-button" onclick="showSection('requestsView')">
           📩 Solicitudes
         </button>
-        <button class="menu-button" onclick="showSection('groupView')">
-          👥 Grupos
-        </button>
         <button class="menu-button" onclick="showSection('profileView')">
           ⚙️ Perfil
         </button>
@@ -85,50 +43,6 @@
           </ul>
         </div>
 
-        <!-- Vista: Grupos -->
-        <div id="groupView" class="section group-section" style="display: none">
-          <h2>👥 Grupos</h2>
-          <form id="createGroupForm" style="margin-bottom: 1em">
-            <input
-              type="text"
-              id="groupNameInput"
-              placeholder="Nombre del grupo"
-              required
-            />
-            <select
-              id="groupMembersSelect"
-              multiple
-              size="4"
-              style="min-width: 180px; margin: 0 8px"
-              required
-            ></select>
-            <button type="submit">Crear grupo</button>
-          </form>
-          <ul id="groupList" style="margin-bottom: 1em">
-            <li>Cargando grupos...</li>
-          </ul>
-
-          <!-- Modal para añadir miembros a grupo -->
-          <div id="addMembersModal" class="modal" style="display: none">
-            <div class="modal-content">
-              <h3>Añadir miembros al grupo</h3>
-              <form id="addMembersForm">
-                <select
-                  id="addMembersSelect"
-                  multiple
-                  size="5"
-                  style="min-width: 180px"
-                ></select>
-                <div style="margin-top: 1em">
-                  <button type="submit">Agregar</button>
-                  <button type="button" onclick="closeAddMembersModal()">
-                    Cancelar
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
 
         <!-- Vista: Agregar contacto -->
         <div id="addContactView" class="section" style="display: none">
@@ -212,19 +126,6 @@
               <p>🔐 Conectado como: <span id="connectedUser">...</span></p>
               <p>📨 Chateando con: <span id="chattingWith">...</span></p>
             </div>
-            <span
-              id="groupOptions"
-              style="cursor: pointer; font-size: 1.5rem"
-              onclick="openGroupOptionsMenu()"
-              title="Opciones del grupo"
-              >⚙️</span
-            >
-            <div id="groupOptionsMenu" role="menu" aria-label="Opciones del grupo">
-              <button onclick="openManageMembersModal()">Administrar miembros</button>
-              <button onclick="clearGroupChat()">Limpiar chat</button>
-              <button onclick="deleteGroup()">Eliminar grupo</button>
-              <button onclick="toggleGroupOptionsMenu()">Cerrar</button>
-            </div>
           </div>
           <div id="messages" class="chat-box"></div>
           <div class="chat-input">
@@ -288,34 +189,6 @@
       </div>
     </div>
 
-    <div id="manageMembersOptionsGroup" class="options-group" style="display: none">
-      <div class="modal-content">
-        <h3>Administrar grupo</h3>
-        <div style="margin-bottom: 1em">
-          <h4>Añadir miembros</h4>
-          <form id="addMembersForm">
-            <select
-              id="addMembersSelect"
-              multiple
-              size="5"
-              style="min-width: 180px"
-            ></select>
-            <button type="submit">Agregar</button>
-          </form>
-        </div>
-        <div style="margin-bottom: 1em">
-          <h4>Miembros actuales</h4>
-          <ul id="groupMembersList"></ul>
-        </div>
-        <div style="margin-bottom: 1em">
-          <button onclick="clearGroupChat()">🧹 Limpiar chat</button>
-          <button onclick="deleteGroup()">🗑️ Eliminar grupo</button>
-        </div>
-        <button type="button" onclick="closeManageMembersModal()">
-          Cerrar
-        </button>
-      </div>
-    </div>
 
     <script>
       // --- Utilidades de cifrado AES global ---
@@ -395,475 +268,8 @@
         "addContactView",
         "requestsView",
         "profileView",
-        "groupView",
         "chatView",
       ];
-      // --- Grupos ---
-      let currentGroupId = null;
-      let currentGroupName = null;
-
-      // Carga y renderiza la lista de grupos
-      async function loadGroups() {
-        const groupList = document.getElementById("groupList");
-        groupList.innerHTML = "<li>Cargando grupos...</li>";
-        try {
-          const res = await fetch(
-            "https://chat-app-backend-u5na.onrender.com/get-groups",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email: userEmail }),
-            }
-          );
-          const data = await res.json();
-          if (!data.groups || data.groups.length === 0) {
-            groupList.innerHTML = "<li>No tienes grupos aún.</li>";
-            return;
-          }
-          groupList.innerHTML = "";
-          for (const group of data.groups) {
-            const li = document.createElement("li");
-            li.innerHTML = `
-              <div class="group-box" data-groupid="${
-                group.id
-              }" onclick="openGroupChat('${group.id}', '${group.name.replace(
-              /'/g,
-              "\\'"
-            )}')" style="cursor:pointer;">
-  ${group.name} (${group.members.length} miembros)
-</div>
-            `;
-            groupList.appendChild(li);
-          }
-        } catch (err) {
-          groupList.innerHTML = "<li>Error al cargar grupos.</li>";
-        }
-      }
-
-      // Actualiza las opciones del select múltiple de contactos para crear grupo
-      async function updateGroupContactsSelect() {
-        const select = document.getElementById("groupMembersSelect");
-        select.innerHTML = "";
-        try {
-          const res = await fetch(
-            "https://chat-app-backend-u5na.onrender.com/get-contacts",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email: userEmail }),
-            }
-          );
-          const data = await res.json();
-          for (const contact of data.contacts) {
-            if (contact.email !== userEmail) {
-              const opt = document.createElement("option");
-              opt.value = contact.email;
-              opt.textContent = `${contact.name} (${contact.email})`;
-              select.appendChild(opt);
-            }
-          }
-        } catch (err) {
-          select.innerHTML = "<option>Error al cargar contactos</option>";
-        }
-      }
-
-      // Abrir modal de añadir miembros
-      async function openAddMembersModal(groupId) {
-        const modal = document.getElementById("addMembersModal");
-        const select = document.getElementById("addMembersSelect");
-        select.innerHTML = "";
-        // Obtener miembros actuales del grupo
-        try {
-          const groupRes = await fetch(
-            "https://chat-app-backend-u5na.onrender.com/get-group",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ group_id: groupId }),
-            }
-          );
-          const groupData = await groupRes.json();
-          const members = groupData.group?.members || [];
-          // Obtener contactos para mostrar solo los que no están en el grupo
-          const res = await fetch(
-            "https://chat-app-backend-u5na.onrender.com/get-contacts",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email: userEmail }),
-            }
-          );
-          const data = await res.json();
-          let count = 0;
-          for (const contact of data.contacts) {
-            if (!members.includes(contact.email)) {
-              const opt = document.createElement("option");
-              opt.value = contact.email;
-              opt.textContent = `${contact.name} (${contact.email})`;
-              select.appendChild(opt);
-              count++;
-            }
-          }
-          if (count === 0) {
-            select.innerHTML =
-              "<option disabled>No hay contactos para agregar</option>";
-          }
-        } catch (err) {
-          select.innerHTML = "<option>Error al cargar contactos</option>";
-        }
-        modal.setAttribute("data-groupid", groupId);
-        modal.style.display = "flex";
-      }
-      function closeAddMembersModal() {
-        const modal = document.getElementById("addMembersModal");
-        modal.style.display = "none";
-        modal.removeAttribute("data-groupid");
-      }
-
-      // Formulario para añadir miembros a grupo
-      document.getElementById("addMembersForm").onsubmit = async function (e) {
-        e.preventDefault();
-        const modal = document.getElementById("addMembersModal");
-        const groupId = modal.getAttribute("data-groupid");
-        const select = document.getElementById("addMembersSelect");
-        const membersToAdd = Array.from(select.selectedOptions).map(
-          (opt) => opt.value
-        );
-        if (!groupId || membersToAdd.length === 0) {
-          showAlert("Selecciona al menos un contacto para agregar.");
-          return;
-        }
-        try {
-          const res = await fetch(
-            "https://chat-app-backend-u5na.onrender.com/add-group-members",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                group_id: groupId,
-                new_members: membersToAdd,
-              }),
-            }
-          );
-          const data = await res.json();
-          if (res.ok) {
-            showAlert("Miembros agregados.");
-            closeAddMembersModal();
-            loadGroups();
-          } else {
-            showAlert(data.error || "No se pudieron agregar miembros.");
-          }
-        } catch (err) {
-          showAlert("Error al agregar miembros.");
-        }
-      };
-
-      // Formulario para crear grupo
-      document.getElementById("createGroupForm").onsubmit = async function (e) {
-        e.preventDefault();
-        const name = document.getElementById("groupNameInput").value.trim();
-        const select = document.getElementById("groupMembersSelect");
-        const members = Array.from(select.selectedOptions).map(
-          (opt) => opt.value
-        );
-        if (!name || members.length === 0) {
-          showAlert("Debes ingresar nombre y seleccionar miembros.");
-          return;
-        }
-        // Siempre incluir al creador
-        if (!members.includes(userEmail)) members.push(userEmail);
-        try {
-          const res = await fetch(
-            "https://chat-app-backend-u5na.onrender.com/create-group",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ name, members, admin: userEmail }),
-            }
-          );
-          const data = await res.json();
-          if (res.ok) {
-            showAlert("Grupo creado correctamente.");
-            document.getElementById("groupNameInput").value = "";
-            select.selectedIndex = -1;
-            loadGroups();
-          } else {
-            showAlert(data.error || "No se pudo crear el grupo.");
-          }
-        } catch (err) {
-          showAlert("Error al crear el grupo.");
-        }
-      };
-
-      let currentGroupAdmin = null;
-
-      // Abrir chat grupal (versión extendida con logs y verificación de existencia del botón)
-      async function openGroupChat(groupId, groupName) {
-        // Limpiar cualquier listener de grupo anterior
-        socket.off("receive_group_message");
-        console.log("[DEBUG] openGroupChat:", groupId, groupName);
-        currentGroupId = groupId;
-        currentGroupName = groupName;
-        chatWith = null;
-        localStorage.removeItem("chat_with");
-        // Limpiar mensajes e input
-
-        try {
-          const groupRes = await fetch(
-            "https://chat-app-backend-u5na.onrender.com/get-group",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ group_id: groupId }),
-            }
-          );
-          const groupData = await groupRes.json();
-          currentGroupAdmin = (groupData.group?.admin || "")
-            .trim()
-            .toLowerCase();
-          const userEmailNormalized = (userEmail || "").trim().toLowerCase();
-          console.log("[DEBUG admin] group admin:", `"${currentGroupAdmin}"`);
-          console.log("[DEBUG admin] user:", `"${userEmailNormalized}"`);
-
-          const groupOptions = document.getElementById("groupOptions");
-          if (!groupOptions) {
-            console.log("[WARN] groupOptions element no encontrado en el DOM");
-          }
-
-          if (!groupOptions) {
-            console.warn(
-              "[WARN] No se encontró el elemento #groupOptions en el DOM"
-            );
-          } else {
-            if (currentGroupAdmin === userEmailNormalized) {
-              groupOptions.style.setProperty("display", "inline-block", "important");
-              console.log("[DEBUG] groupOptions button mostrado");
-            } else {
-              groupOptions.style.setProperty("display", "none", "important");
-              console.log("[DEBUG] groupOptions button ocultado");
-            }
-          }
-          // Ocultar el menú de opciones del grupo al abrir un chat nuevo
-          const groupOptionsMenu = document.getElementById("groupOptionsMenu");
-          if (groupOptionsMenu) {
-            groupOptionsMenu.classList.remove("visible");
-          }
-        } catch (e) {
-          const groupOptions = document.getElementById("groupOptions");
-          if (groupOptions) groupOptions.style.display = "none";
-          console.log("[ERROR] Error al obtener datos del grupo:", e);
-        }
-
-        const messages = document.getElementById("messages");
-        if (messages) messages.innerHTML = "";
-        document.getElementById("inputMessage").value = "";
-        showSection("chatView");
-        document.getElementById("chattingWith").textContent =
-          "Grupo: " + groupName;
-        // Unirse a la sala de grupo
-        socket.emit("join_group", { group_id: groupId });
-        // Obtener historial de mensajes
-        try {
-          const res = await fetch(
-            "https://chat-app-backend-u5na.onrender.com/get-group-messages",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ group_id: groupId }),
-            }
-          );
-          const data = await res.json();
-          messages.innerHTML = "";
-          for (const msg of data.messages || []) {
-            msg.message = await decryptMessageAesGcm(msg.message);
-            appendGroupMessage(msg);
-          }
-          messages.scrollTop = messages.scrollHeight;
-        } catch (err) {
-          messages.innerHTML = "<div>Error al cargar mensajes del grupo.</div>";
-        }
-        // Listener de mensajes grupales SOLO para el grupo abierto
-        socket.on("receive_group_message", async (msg) => {
-          if (msg.group_id === currentGroupId) {
-            msg.message = await decryptMessageAesGcm(msg.message);
-            appendGroupMessage(msg);
-            document.getElementById("messages").scrollTop =
-              document.getElementById("messages").scrollHeight;
-          }
-        });
-      }
-
-      function openGroupOptionsMenu() {
-        loadManageMembersModal();
-        document.getElementById("manageMembersModal").style.display = "flex";
-      }
-      // Nueva función para abrir el modal de administrar miembros desde el menú
-      function openManageMembersModal() {
-        loadManageMembersModal();
-        document.getElementById("manageMembersModal").style.display = "flex";
-        // Ocultar menú de opciones al abrir el modal
-        const menu = document.getElementById("groupOptionsMenu");
-        if (menu) menu.classList.remove("visible");
-      }
-      function closeManageMembersModal() {
-        document.getElementById("manageMembersModal").style.display = "none";
-      }
-
-      async function loadManageMembersModal() {
-        const addSelect = document.getElementById("addMembersSelect");
-        const membersList = document.getElementById("groupMembersList");
-        addSelect.innerHTML = "";
-        membersList.innerHTML = "";
-
-        // Trae contactos
-        const contactsRes = await fetch(
-          "https://chat-app-backend-u5na.onrender.com/get-contacts",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: userEmail }),
-          }
-        );
-        const contactsData = await contactsRes.json();
-
-        // Trae info del grupo
-        const groupRes = await fetch(
-          "https://chat-app-backend-u5na.onrender.com/get-group",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ group_id: currentGroupId }),
-          }
-        );
-        const groupData = await groupRes.json();
-        const members = groupData.group?.members || [];
-
-        // Añadir miembros (solo los que no están en el grupo)
-        for (const contact of contactsData.contacts) {
-          if (!members.includes(contact.email)) {
-            const opt = document.createElement("option");
-            opt.value = contact.email;
-            opt.textContent = contact.name; // Solo el nombre
-            addSelect.appendChild(opt);
-          }
-        }
-
-        // Lista de miembros actuales
-        for (const email of members) {
-          const contact = contactsData.contacts.find((c) => c.email === email);
-          const name = contact ? contact.name : email;
-          const li = document.createElement("li");
-          li.textContent = name;
-          if (email !== currentGroupAdmin && email !== userEmail) {
-            const btn = document.createElement("button");
-            btn.textContent = "Eliminar";
-            btn.onclick = () => removeMemberFromGroup(email);
-            li.appendChild(btn);
-          }
-          membersList.appendChild(li);
-        }
-      }
-
-      // Añadir miembros al grupo
-      document.getElementById("addMembersForm").onsubmit = async function (e) {
-        e.preventDefault();
-        const select = document.getElementById("addMembersSelect");
-        const membersToAdd = Array.from(select.selectedOptions).map(
-          (opt) => opt.value
-        );
-        if (membersToAdd.length === 0) return;
-        await fetch(
-          "https://chat-app-backend-u5na.onrender.com/add-group-members",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              group_id: currentGroupId,
-              new_members: membersToAdd,
-            }),
-          }
-        );
-        loadManageMembersModal();
-        loadGroups();
-      };
-
-      // Eliminar miembro del grupo
-      async function removeMemberFromGroup(email) {
-        await fetch(
-          "https://chat-app-backend-u5na.onrender.com/remove-group-member",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              group_id: currentGroupId,
-              member_email: email,
-            }),
-          }
-        );
-        loadManageMembersModal();
-        loadGroups();
-      }
-
-      // Limpiar chat de grupo
-      async function clearGroupChat() {
-        if (!confirm("¿Seguro que quieres limpiar el chat de este grupo?"))
-          return;
-        await fetch(
-          "https://chat-app-backend-u5na.onrender.com/clear-group-chat",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ group_id: currentGroupId }),
-          }
-        );
-        closeManageMembersModal();
-        openGroupChat(currentGroupId, currentGroupName);
-      }
-
-      // Eliminar grupo
-      async function deleteGroup() {
-        if (
-          !confirm(
-            "¿Seguro que deseas eliminar este grupo? No se podrá recuperar."
-          )
-        )
-          return;
-        await fetch("https://chat-app-backend-u5na.onrender.com/delete-group", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ group_id: currentGroupId }),
-        });
-        closeManageMembersModal();
-        showSection("groupView");
-        loadGroups();
-      }
-
-      // Enviar mensaje grupal
-      async function sendGroupMessage() {
-        const input = document.getElementById("inputMessage");
-        const message = input.value.trim();
-        if (!message || !globalAesKey || !currentGroupId) return;
-        const encrypted = await encryptMessageAesGcm(message);
-        socket.emit("send_group_message", {
-          group_id: currentGroupId,
-          from: userEmail,
-          message: encrypted,
-        });
-        input.value = "";
-      }
-
-      // Renderizar mensaje grupal
-      function appendGroupMessage(msg) {
-        const container = document.getElementById("messages");
-        const el = document.createElement("div");
-        const isOwn = msg.from === userEmail;
-        let displayName = isOwn ? "Tú" : msg.from_name || msg.from || "";
-        if (!displayName && msg.from) displayName = msg.from;
-        el.classList.add("chat-message");
-        el.style.alignSelf = isOwn ? "flex-end" : "flex-start";
-        el.innerHTML = `<strong>${displayName}:</strong> ${msg.message}`;
-        container.appendChild(el);
-      }
       let currentSection = "contactView";
       let contactListMap = {};
 
@@ -1528,7 +934,7 @@
         container.scrollTop = container.scrollHeight;
       });
 
-      // Cambia showSection para soportar grupos
+      // Cambia showSection para soportar solo las secciones sin grupos
       const origShowSection = function (id) {
         sections.forEach(
           (s) => (document.getElementById(s).style.display = "none")
@@ -1544,16 +950,6 @@
         }
         if (id === "requestsView") {
           loadRequests();
-        }
-        if (id === "groupView") {
-          loadGroups();
-          updateGroupContactsSelect();
-        }
-        // Limpiar listeners y chat group state si sales del chatView
-        if (id !== "chatView") {
-          socket.off("receive_group_message");
-          currentGroupId = null;
-          currentGroupName = null;
         }
       };
 
@@ -1586,43 +982,25 @@
         showNotificationBadge(data.from);
       });
 
-      // --- Envío de mensajes: soporta chat privado y grupal ---
+      // --- Envío de mensajes solo chat privado ---
       function setSendMessageHandler() {
         const btn = document.getElementById("sendMessageBtn");
         const input = document.getElementById("inputMessage");
         // Limpia listeners previos
         btn.onclick = null;
         input.onkeydown = null;
-        if (currentGroupId) {
-          btn.onclick = sendGroupMessage;
-          input.onkeydown = function (e) {
-            if (e.key === "Enter") {
-              sendGroupMessage();
-              return false;
-            }
-          };
-        } else {
-          btn.onclick = sendMessage;
-          input.onkeydown = function (e) {
-            if (e.key === "Enter") {
-              sendMessage();
-              return false;
-            }
-          };
-        }
+        btn.onclick = sendMessage;
+        input.onkeydown = function (e) {
+          if (e.key === "Enter") {
+            sendMessage();
+            return false;
+          }
+        };
       }
 
-      // Hook para actualizar el envío de mensajes cuando cambia de chat privado/grupal
-      const origOpenGroupChat = openGroupChat;
-      openGroupChat = async function (groupId, groupName) {
-        await origOpenGroupChat(groupId, groupName);
-        setSendMessageHandler();
-      };
       const origStartChat = startChat;
       startChat = async function (email) {
         await origStartChat(email);
-        currentGroupId = null;
-        currentGroupName = null;
         document.getElementById("chattingWith").textContent =
           await fetchContactName(email);
         setSendMessageHandler();
@@ -1632,31 +1010,9 @@
         // Siempre inicia mostrando contactos y limpia referencias de chats anteriores
         localStorage.removeItem("chat_with");
         chatWith = null;
-        currentGroupId = null;
-        currentGroupName = null;
         setSendMessageHandler();
         showSection("contactView");
       });
-    // --- Opciones menú de grupo desplegable ---
-    function toggleGroupOptionsMenu() {
-      const menu = document.getElementById("groupOptionsMenu");
-      if (menu.classList.contains("visible")) {
-        menu.classList.remove("visible");
-      } else {
-        menu.classList.add("visible");
-      }
-    }
-
-    document.getElementById("groupOptions").addEventListener("click", (e) => {
-      e.stopPropagation();
-      toggleGroupOptionsMenu();
-    });
-
-    // Ocultar el menú si se hace clic fuera
-    document.addEventListener("click", () => {
-      const menu = document.getElementById("groupOptionsMenu");
-      if (menu) menu.classList.remove("visible");
-    });
     </script>
   </body>
 </html>
