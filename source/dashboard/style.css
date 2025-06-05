@@ -1061,3 +1061,17 @@ button.delete-chat:hover {
 .group-box:hover {
   background-color: #3a3a3a;
 }
+
+.options-group {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  width: 320px;
+  max-width: 90%;
+}
