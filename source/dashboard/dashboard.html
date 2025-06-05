@@ -578,7 +578,7 @@
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ name, members }),
+              body: JSON.stringify({ name, members, creator: userEmail }),
             }
           );
           const data = await res.json();
@@ -618,7 +618,7 @@
             }
           );
           const groupData = await groupRes.json();
-          currentGroupAdmin = (groupData.group?.admin || "")
+          currentGroupAdmin = (groupData.group?.creator || "")
             .trim()
             .toLowerCase();
           const userEmailNormalized = (userEmail || "").trim().toLowerCase();
