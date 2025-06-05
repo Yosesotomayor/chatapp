@@ -1288,9 +1288,8 @@
           from: userEmail,
           message: encrypted,
         });
+        // El mensaje no se debe renderizar localmente aquí; solo el backend debe propagarlo.
         input.value = "";
-        // Renderiza localmente el mensaje enviado
-        appendGroupMessage({ from: userEmail, message, group_id: currentGroupId });
       }
 
       // Modifica el evento de input para soportar grupos
