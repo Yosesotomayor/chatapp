@@ -164,7 +164,7 @@
             <p>📨 Chateando con: <span id="chattingWith">...</span></p>
             <span
               id="groupOptions"
-              style="display: none; margin-left: 10px; cursor: pointer"
+              style="display: inline-block; margin-left: 10px; cursor: pointer"
               onclick="openGroupOptionsMenu()"
               >⚙️</span
             >
@@ -561,7 +561,9 @@
             }
           );
           const groupData = await groupRes.json();
-          currentGroupAdmin = (groupData.group?.admin || "").trim().toLowerCase();
+          currentGroupAdmin = (groupData.group?.admin || "")
+            .trim()
+            .toLowerCase();
           const userEmailNormalized = (userEmail || "").trim().toLowerCase();
           console.log("[DEBUG admin] group admin:", `"${currentGroupAdmin}"`);
           console.log("[DEBUG admin] user:", `"${userEmailNormalized}"`);
@@ -592,7 +594,8 @@
         if (messages) messages.innerHTML = "";
         document.getElementById("inputMessage").value = "";
         showSection("chatView");
-        document.getElementById("chattingWith").textContent = "Grupo: " + groupName;
+        document.getElementById("chattingWith").textContent =
+          "Grupo: " + groupName;
         // Unirse a la sala de grupo
         socket.emit("join_group", { group_id: groupId });
         // Obtener historial de mensajes
