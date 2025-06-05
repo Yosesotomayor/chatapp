@@ -573,13 +573,15 @@
             console.log("[WARN] groupOptions element no encontrado en el DOM");
           }
 
-          if (currentGroupAdmin && currentGroupAdmin === userEmailNormalized) {
-            if (groupOptions) {
+          if (!groupOptions) {
+            console.warn(
+              "[WARN] No se encontró el elemento #groupOptions en el DOM"
+            );
+          } else {
+            if (currentGroupAdmin === userEmailNormalized) {
               groupOptions.style.display = "inline-block";
               console.log("[DEBUG] groupOptions button mostrado");
-            }
-          } else {
-            if (groupOptions) {
+            } else {
               groupOptions.style.display = "none";
               console.log("[DEBUG] groupOptions button ocultado");
             }
