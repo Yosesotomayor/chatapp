@@ -4,6 +4,47 @@
     <meta charset="UTF-8" />
     <title>Dashboard - ChatApp</title>
     <link rel="stylesheet" href="style.css" />
+    <style>
+      /* Estilos para el botón de opciones del grupo */
+      #groupOptions {
+        position: relative;
+        cursor: pointer;
+        font-size: 1.5rem;
+        padding: 0.3rem;
+      }
+
+      /* Menú desplegable para opciones */
+      #groupOptionsMenu {
+        display: none;
+        position: absolute;
+        top: 2.2rem;
+        right: 0;
+        background-color: white;
+        border: 1px solid #ccc;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        border-radius: 4px;
+        z-index: 1000;
+        min-width: 160px;
+      }
+
+      #groupOptionsMenu.visible {
+        display: block;
+      }
+
+      #groupOptionsMenu button {
+        background: none;
+        border: none;
+        width: 100%;
+        text-align: left;
+        padding: 8px 12px;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+
+      #groupOptionsMenu button:hover {
+        background-color: #f0f0f0;
+      }
+    </style>
     <script>
       if (!localStorage.getItem("user_email")) {
         window.location.href = "/";
@@ -178,6 +219,12 @@
               title="Opciones del grupo"
               >⚙️</span
             >
+            <div id="groupOptionsMenu" role="menu" aria-label="Opciones del grupo">
+              <button onclick="openManageMembersModal()">Administrar miembros</button>
+              <button onclick="clearGroupChat()">Limpiar chat</button>
+              <button onclick="deleteGroup()">Eliminar grupo</button>
+              <button onclick="toggleGroupOptionsMenu()">Cerrar</button>
+            </div>
           </div>
           <div id="messages" class="chat-box"></div>
           <div class="chat-input">
@@ -589,12 +636,17 @@
             );
           } else {
             if (currentGroupAdmin === userEmailNormalized) {
-              groupOptions.style.display = "inline-block";
+              groupOptions.style.setProperty("display", "inline-block", "important");
               console.log("[DEBUG] groupOptions button mostrado");
             } else {
-              groupOptions.style.display = "none";
+              groupOptions.style.setProperty("display", "none", "important");
               console.log("[DEBUG] groupOptions button ocultado");
             }
+          }
+          // Ocultar el menú de opciones del grupo al abrir un chat nuevo
+          const groupOptionsMenu = document.getElementById("groupOptionsMenu");
+          if (groupOptionsMenu) {
+            groupOptionsMenu.classList.remove("visible");
           }
         } catch (e) {
           const groupOptions = document.getElementById("groupOptions");
@@ -644,6 +696,14 @@
       function openGroupOptionsMenu() {
         loadManageMembersModal();
         document.getElementById("manageMembersModal").style.display = "flex";
+      }
+      // Nueva función para abrir el modal de administrar miembros desde el menú
+      function openManageMembersModal() {
+        loadManageMembersModal();
+        document.getElementById("manageMembersModal").style.display = "flex";
+        // Ocultar menú de opciones al abrir el modal
+        const menu = document.getElementById("groupOptionsMenu");
+        if (menu) menu.classList.remove("visible");
       }
       function closeManageMembersModal() {
         document.getElementById("manageMembersModal").style.display = "none";
@@ -1577,6 +1637,26 @@
         setSendMessageHandler();
         showSection("contactView");
       });
+    // --- Opciones menú de grupo desplegable ---
+    function toggleGroupOptionsMenu() {
+      const menu = document.getElementById("groupOptionsMenu");
+      if (menu.classList.contains("visible")) {
+        menu.classList.remove("visible");
+      } else {
+        menu.classList.add("visible");
+      }
+    }
+
+    document.getElementById("groupOptions").addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleGroupOptionsMenu();
+    });
+
+    // Ocultar el menú si se hace clic fuera
+    document.addEventListener("click", () => {
+      const menu = document.getElementById("groupOptionsMenu");
+      if (menu) menu.classList.remove("visible");
+    });
     </script>
   </body>
 </html>
