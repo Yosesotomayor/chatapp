@@ -495,12 +495,16 @@
         } catch (err) {
           messages.innerHTML = "<div>Error al cargar mensajes del grupo.</div>";
         }
-        // Listener de mensajes grupales
+        // Antes de instalar el listener, quitar cualquier listener previo
+        socket.off("receive_group_message");
+        // Listener de mensajes grupales SOLO para el grupo abierto
         socket.on("receive_group_message", async (msg) => {
-          msg.message = await decryptMessageAesGcm(msg.message);
-          appendGroupMessage(msg);
-          document.getElementById("messages").scrollTop =
-            document.getElementById("messages").scrollHeight;
+          if (msg.groupId === currentGroupId) {
+            msg.message = await decryptMessageAesGcm(msg.message);
+            appendGroupMessage(msg);
+            document.getElementById("messages").scrollTop =
+              document.getElementById("messages").scrollHeight;
+          }
         });
       }
 
