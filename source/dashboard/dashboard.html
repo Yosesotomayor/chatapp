@@ -541,6 +541,8 @@
 
       // Abrir chat grupal
       async function openGroupChat(groupId, groupName) {
+        // Limpiar cualquier listener de grupo anterior
+        socket.off("receive_group_message");
         console.log("[DEBUG] openGroupChat:", groupId, groupName);
         currentGroupId = groupId;
         currentGroupName = groupName;
@@ -559,7 +561,11 @@
           );
           const groupData = await groupRes.json();
           currentGroupAdmin = groupData.group?.admin;
-          if (currentGroupAdmin && currentGroupAdmin === userEmail) {
+          if (
+            currentGroupAdmin &&
+            currentGroupAdmin.trim().toLowerCase() ===
+              userEmail.trim().toLowerCase()
+          ) {
             document.getElementById("groupOptions").style.display =
               "inline-block";
           } else {
@@ -597,8 +603,6 @@
         } catch (err) {
           messages.innerHTML = "<div>Error al cargar mensajes del grupo.</div>";
         }
-        // Antes de instalar el listener, quitar cualquier listener previo
-        socket.off("receive_group_message");
         // Listener de mensajes grupales SOLO para el grupo abierto
         socket.on("receive_group_message", async (msg) => {
           if (msg.group_id === currentGroupId) {
@@ -746,7 +750,7 @@
         showSection("groupView");
         loadGroups();
       }
-      
+
       // Enviar mensaje grupal
       async function sendGroupMessage() {
         const input = document.getElementById("inputMessage");
@@ -1458,8 +1462,9 @@
           loadGroups();
           updateGroupContactsSelect();
         }
-        // Limpiar chat group state si sales del chatView
+        // Limpiar listeners y chat group state si sales del chatView
         if (id !== "chatView") {
+          socket.off("receive_group_message");
           currentGroupId = null;
           currentGroupName = null;
         }
