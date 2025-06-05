@@ -556,14 +556,15 @@
             }
           );
           const groupData = await groupRes.json();
-          currentGroupAdmin = groupData.group?.admin;
+          // Normaliza ambos correos para comparar sin errores de mayúsculas/espacios
+          currentGroupAdmin = (groupData.group?.admin || "").trim().toLowerCase();
+          const userEmailNormalized = (userEmail || "").trim().toLowerCase();
+          console.log("[DEBUG admin] group admin:", currentGroupAdmin, "user:", userEmailNormalized);
           if (
             currentGroupAdmin &&
-            currentGroupAdmin.trim().toLowerCase() ===
-              userEmail.trim().toLowerCase()
+            currentGroupAdmin === userEmailNormalized
           ) {
-            document.getElementById("groupOptions").style.display =
-              "inline-block";
+            document.getElementById("groupOptions").style.display = "inline-block";
           } else {
             document.getElementById("groupOptions").style.display = "none";
           }
