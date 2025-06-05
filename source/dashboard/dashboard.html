@@ -1258,6 +1258,7 @@
         const input = document.getElementById("inputMessage");
         const message = input.value.trim();
         if (!message || !currentGroupId || !globalAesKey) return;
+        console.log("[ENVIANDO MENSAJE GRUPO]", currentGroupId, message); // Log para enviar
         const encrypted = await encryptMessageAesGcm(message);
         socket.emit("send_group_message", {
           group_id: currentGroupId,
@@ -1279,7 +1280,18 @@
           }
         });
 
-      // El listener de grupo ahora se configura dinámicamente en openGroupChat
+      // Listener para mensajes de grupo
+      socket.on("receive_group_message", async (msg) => {
+        console.log("[RECIBIDO MENSAJE GRUPO]", msg); // Log para recibir
+        let texto = msg.message || msg.text || "";
+        texto = await decryptMessageAesGcm(texto);
+        if (msg.group_id === currentGroupId) {
+          appendGroupMessage({
+            ...msg,
+            message: texto
+          });
+        }
+      });
 
       // Cambia showSection para cargar grupos y actualizar contactos de grupo,
       // y solo cargar contactos una vez al entrar a contactView
