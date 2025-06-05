@@ -744,6 +744,13 @@
           user2: email,
         });
 
+        // Instala el listener para mensajes directos cada vez que abres un chat
+        socket.on("receive_message", async (msg) => {
+          msg.message = await decryptMessageAesGcm(msg.message);
+          appendMessage(msg);
+          document.getElementById("messages").scrollTop =
+            document.getElementById("messages").scrollHeight;
+        });
         // No es necesario handshake ni claves, flujo simplificado
       }
 
