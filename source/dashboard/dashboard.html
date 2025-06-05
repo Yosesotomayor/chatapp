@@ -618,7 +618,7 @@
             }
           );
           const groupData = await groupRes.json();
-          currentGroupAdmin = (groupData.group?.creator || "")
+          currentGroupAdmin = (groupData.group?.admin || "")
             .trim()
             .toLowerCase();
           const userEmailNormalized = (userEmail || "").trim().toLowerCase();
