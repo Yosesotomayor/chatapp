@@ -483,7 +483,7 @@
           const res = await fetch("https://chat-app-backend-u5na.onrender.com/get-group-messages", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ groupId }),
+            body: JSON.stringify({ group_id: groupId }),
           });
           const data = await res.json();
           messages.innerHTML = "";
