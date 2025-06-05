@@ -367,12 +367,8 @@
           for (const group of data.groups) {
             const li = document.createElement("li");
             li.innerHTML = `
-              <div class="group-box" style="display: flex; align-items: center;">
-                <span style="flex: 1; cursor:pointer" onclick="openGroupChat('${
-                  group._id
-                }', '${group.name.replace(/'/g, "\\'")}')">
-                  ${group.name} (${group.members.length} miembros)
-                </span>
+              <div class="group-box" data-groupid="${group._id}" onclick="openGroupChat('${group._id}', '${group.name.replace(/'/g, "\\'")}')" style="cursor:pointer;">
+                ${group.name} (${group.members.length} miembros)
               </div>
             `;
             groupList.appendChild(li);
