@@ -540,7 +540,7 @@
 
       let currentGroupAdmin = null;
 
-      // Abrir chat grupal
+      // Abrir chat grupal (versión extendida con logs y verificación de existencia del botón)
       async function openGroupChat(groupId, groupName) {
         // Limpiar cualquier listener de grupo anterior
         socket.off("receive_group_message");
@@ -561,33 +561,38 @@
             }
           );
           const groupData = await groupRes.json();
-          // Normaliza ambos correos para comparar sin errores de mayúsculas/espacios
-          currentGroupAdmin = (groupData.group?.admin || "")
-            .trim()
-            .toLowerCase();
+          currentGroupAdmin = (groupData.group?.admin || "").trim().toLowerCase();
           const userEmailNormalized = (userEmail || "").trim().toLowerCase();
-          console.log(
-            "[DEBUG admin] group admin:",
-            currentGroupAdmin,
-            "user:",
-            userEmailNormalized
-          );
+          console.log("[DEBUG admin] group admin:", `"${currentGroupAdmin}"`);
+          console.log("[DEBUG admin] user:", `"${userEmailNormalized}"`);
+
+          const groupOptions = document.getElementById("groupOptions");
+          if (!groupOptions) {
+            console.log("[WARN] groupOptions element no encontrado en el DOM");
+          }
+
           if (currentGroupAdmin && currentGroupAdmin === userEmailNormalized) {
-            document.getElementById("groupOptions").style.display =
-              "inline-block";
+            if (groupOptions) {
+              groupOptions.style.display = "inline-block";
+              console.log("[DEBUG] groupOptions button mostrado");
+            }
           } else {
-            document.getElementById("groupOptions").style.display = "none";
+            if (groupOptions) {
+              groupOptions.style.display = "none";
+              console.log("[DEBUG] groupOptions button ocultado");
+            }
           }
         } catch (e) {
-          document.getElementById("groupOptions").style.display = "none";
+          const groupOptions = document.getElementById("groupOptions");
+          if (groupOptions) groupOptions.style.display = "none";
+          console.log("[ERROR] Error al obtener datos del grupo:", e);
         }
 
         const messages = document.getElementById("messages");
         if (messages) messages.innerHTML = "";
         document.getElementById("inputMessage").value = "";
         showSection("chatView");
-        document.getElementById("chattingWith").textContent =
-          "Grupo: " + groupName;
+        document.getElementById("chattingWith").textContent = "Grupo: " + groupName;
         // Unirse a la sala de grupo
         socket.emit("join_group", { group_id: groupId });
         // Obtener historial de mensajes
