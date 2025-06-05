@@ -737,10 +737,18 @@
           loadContacts(); // Recargar contactos automáticamente
         }
       });
+      function limpiarListenersMensajes() {
+        socket.off("receive_message");
+        socket.off("chat_history");
+        socket.off("receive_group_message");
+        socket.off("group_chat_history");
+      }
+
       async function startChat(email) {
         // --- Evitar solapamiento de chats directos y de grupo ---
         // Al abrir un chat directo, limpia el contexto de grupo.
         // Esto previene errores al alternar entre chats directos y grupales.
+        limpiarListenersMensajes();
         currentGroupId = null;
         currentGroupName = null;
         // Limpia también el grupo de localStorage
@@ -1185,6 +1193,7 @@
 
       async function openGroupChat(groupId, groupName) {
         // Limpiar contexto directo y listeners viejos
+        limpiarListenersMensajes();
         chatWith = null;
         localStorage.removeItem("chat_with");
 
@@ -1200,11 +1209,8 @@
         document.getElementById("inputMessage").value = "";
 
         showSection("chatView");
-        document.getElementById("chattingWith").textContent = "Grupo: " + groupName;
-
-        // Quitar TODOS los listeners anteriores de receive_group_message y group_chat_history
-        socket.off("receive_group_message");
-        socket.off("group_chat_history");
+        document.getElementById("chattingWith").textContent =
+          "Grupo: " + groupName;
 
         // Unirse al grupo y pedir historial
         socket.emit("join_group", { group_id: groupId });
@@ -1215,7 +1221,9 @@
         // Listener SOLO UNA VEZ y SOLO PARA EL GRUPO ACTUAL
         socket.on("receive_group_message", async (msg) => {
           if (msg.group_id === currentGroupId) {
-            msg.message = await decryptMessageAesGcm(msg.message || msg.text || "");
+            msg.message = await decryptMessageAesGcm(
+              msg.message || msg.text || ""
+            );
             appendGroupMessage(msg);
           }
         });
@@ -1235,7 +1243,9 @@
         container.innerHTML = "";
         if (!data.messages) return;
         for (const msg of data.messages) {
-          msg.message = await decryptMessageAesGcm(msg.message || msg.text || "");
+          msg.message = await decryptMessageAesGcm(
+            msg.message || msg.text || ""
+          );
           appendGroupMessage(msg);
         }
         container.scrollTop = container.scrollHeight;
@@ -1283,13 +1293,15 @@
       }
 
       // Modifica el evento de input para soportar grupos
-      document.getElementById("inputMessage").addEventListener("keydown", function (e) {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          if (currentGroupId) sendGroupMessage();
-          else sendMessage();
-        }
-      });
+      document
+        .getElementById("inputMessage")
+        .addEventListener("keydown", function (e) {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            if (currentGroupId) sendGroupMessage();
+            else sendMessage();
+          }
+        });
 
       // Listener para mensajes de grupo
       // (Ahora el listener se instala en openGroupChat, no aquí, para evitar duplicados)
@@ -1346,6 +1358,12 @@
           showNotificationBadge(sender);
         }
       });
+      function limpiarListenersMensajes() {
+        socket.off("receive_message");
+        socket.off("chat_history");
+        socket.off("receive_group_message");
+        socket.off("group_chat_history");
+      }
 
       socket.on("notify_unread", (data) => {
         console.log("[NOTIF] Mensaje no leído desde:", data.from);
