@@ -1198,7 +1198,27 @@
         // Unirse a la sala y esperar confirmación con manejo de errores robusto
         try {
           socket.emit("join_group", { group_id: groupId });
-          await waitForGroupJoin(groupId);
+
+          // Espera la confirmación de que se unió al grupo o un error
+          await new Promise((resolve, reject) => {
+            function onJoined(data) {
+              if (data && data.group_id === groupId) {
+                socket.off("joined_group", onJoined);
+                socket.off("join_group_error", onError);
+                resolve();
+              }
+            }
+            function onError(data) {
+              if (data && data.group_id === groupId) {
+                socket.off("joined_group", onJoined);
+                socket.off("join_group_error", onError);
+                reject(new Error("Error al unirse al grupo"));
+              }
+            }
+            socket.on("joined_group", onJoined);
+            socket.on("join_group_error", onError);
+          });
+
           await loadGroupChatHistory(groupId);
 
           // Listener SIEMPRE después del await y solo uno por vez
@@ -1317,6 +1337,13 @@
           loadRequests();
         }
       };
+
+      // Manejo de error al unirse a un grupo: mostrar alerta y regresar a contactos
+      socket.on("join_group_error", (data) => {
+        console.error("[ERROR] join_group_error:", data);
+        showAlert("No se pudo unir al grupo: " + (data.message || "Error desconocido."));
+        showSection("contactView");
+      });
 
       socket.on("receive_message", async (msg) => {
         msg.message = await decryptMessageAesGcm(msg.message);
