@@ -1184,64 +1184,41 @@
       }
 
       async function openGroupChat(groupId, groupName) {
-        // Limpiar contexto directo
+        // Limpiar contexto directo y listeners viejos
         chatWith = null;
         localStorage.removeItem("chat_with");
 
-        // Configurar grupo
+        // Guardar info de grupo actual
         currentGroupId = groupId;
         currentGroupName = groupName;
         localStorage.setItem("current_group_id", groupId);
         localStorage.setItem("current_group_name", groupName);
 
-        // Limpiar mensajes y input antes de mostrar chatView
+        // Limpiar mensajes e input
         const messages = document.getElementById("messages");
         if (messages) messages.innerHTML = "";
         document.getElementById("inputMessage").value = "";
 
         showSection("chatView");
-        document.getElementById("chattingWith").textContent =
-          "Grupo: " + groupName;
+        document.getElementById("chattingWith").textContent = "Grupo: " + groupName;
 
-        // Eliminar listeners viejos antes de añadir uno nuevo
+        // Quitar TODOS los listeners anteriores de receive_group_message y group_chat_history
         socket.off("receive_group_message");
+        socket.off("group_chat_history");
 
-        // Unirse a la sala y esperar confirmación con manejo de errores robusto
-        try {
-          socket.emit("join_group", { group_id: groupId });
+        // Unirse al grupo y pedir historial
+        socket.emit("join_group", { group_id: groupId });
 
-          // Espera la confirmación de que se unió al grupo o un error
-          await new Promise((resolve, reject) => {
-            function onJoined(data) {
-              if (data && data.group_id === groupId) {
-                socket.off("joined_group", onJoined);
-                socket.off("join_group_error", onError);
-                resolve();
-              }
-            }
-            function onError(data) {
-              if (data && data.group_id === groupId) {
-                socket.off("joined_group", onJoined);
-                socket.off("join_group_error", onError);
-                reject(new Error("Error al unirse al grupo"));
-              }
-            }
-            socket.on("joined_group", onJoined);
-            socket.on("join_group_error", onError);
-          });
+        // Pide el historial cada vez que entras
+        await loadGroupChatHistory(groupId);
 
-          // Listener SIEMPRE después del await y solo uno por vez
-          socket.on("receive_group_message", async (msg) => {
-            let texto = msg.message || msg.text || "";
-            texto = await decryptMessageAesGcm(texto);
-            if (msg.group_id === currentGroupId) {
-              appendGroupMessage({ ...msg, message: texto });
-            }
-          });
-        } catch (e) {
-          showSection("contactView");
-          showAlert("No se pudo entrar al grupo. Se muestran los contactos.");
-        }
+        // Listener SOLO UNA VEZ y SOLO PARA EL GRUPO ACTUAL
+        socket.on("receive_group_message", async (msg) => {
+          if (msg.group_id === currentGroupId) {
+            msg.message = await decryptMessageAesGcm(msg.message || msg.text || "");
+            appendGroupMessage(msg);
+          }
+        });
       }
 
       async function loadGroupChatHistory(groupId) {
@@ -1258,9 +1235,7 @@
         container.innerHTML = "";
         if (!data.messages) return;
         for (const msg of data.messages) {
-          msg.message = await decryptMessageAesGcm(
-            msg.message || msg.text || ""
-          );
+          msg.message = await decryptMessageAesGcm(msg.message || msg.text || "");
           appendGroupMessage(msg);
         }
         container.scrollTop = container.scrollHeight;
@@ -1296,25 +1271,25 @@
         const input = document.getElementById("inputMessage");
         const message = input.value.trim();
         if (!message || !currentGroupId || !globalAesKey) return;
+        console.log("[ENVIANDO MENSAJE GRUPO]", currentGroupId, message); // Log para enviar
         const encrypted = await encryptMessageAesGcm(message);
         socket.emit("send_group_message", {
           group_id: currentGroupId,
           from: userEmail,
           message: encrypted,
         });
+        // El mensaje no se debe renderizar localmente aquí; solo el backend debe propagarlo.
         input.value = "";
       }
 
       // Modifica el evento de input para soportar grupos
-      document
-        .getElementById("inputMessage")
-        .addEventListener("keydown", function (e) {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            if (currentGroupId) sendGroupMessage();
-            else sendMessage();
-          }
-        });
+      document.getElementById("inputMessage").addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          if (currentGroupId) sendGroupMessage();
+          else sendMessage();
+        }
+      });
 
       // Listener para mensajes de grupo
       // (Ahora el listener se instala en openGroupChat, no aquí, para evitar duplicados)
