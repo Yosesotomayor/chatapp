@@ -127,6 +127,7 @@ class NNMultiClass:
         for i, W in self.weights.items():
             print(f"\nPesos capa {i} ({W.shape[0]} → {W.shape[1]}):")
             print(W)
+
     def set_weights(self, weights, biases=None, strict=True):
         import numpy as np
 
